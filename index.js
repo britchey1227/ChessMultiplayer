@@ -1,16 +1,53 @@
 window.addEventListener('DOMContentLoaded', () => {
     const tiles = Array.from(document.querySelectorAll('.tile'));
-    const playerDisplay = document.querySelector('.display-player');
+    // const playerDisplay = document.querySelector('.display-player');
     const resetButton = document.querySelector('#reset');
     const announcer = document.querySelector('.announcer');
 
-    let board = ['', '', '', '', '', '', '', '', ''];
+    let board = [
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '']
+    ];
     let currentPlayer = 'X';
     let isGameActive = true;
 
     const PLAYERX_WON = 'PLAYERX_WON';
     const PLAYERO_WON = 'PLAYERO_WON';
     const TIE = 'TIE';
+
+    let incrementor = 0;
+    // for(let i = 0; i < 64; i++){
+    //     if(i%8===0 && i!==0){
+    //         incrementor++;
+    //     }
+    //     if(i%2 === 0){
+    //         tiles[i+incrementor].innerText = "light";
+    //     }
+    // }
+
+    for(let i = 0; i < 64; i++){
+        if(i%2===0){
+            if(Math.floor(i/8)%2===0){
+                tiles[i].style.backgroundColor = '#a6d1f8'
+            }else{
+                tiles[i].style.backgroundColor = "#68b4fc"
+            }
+            
+        }else{
+            if(Math.floor(i/8)%2===0){
+                tiles[i].style.backgroundColor = '#68b4fc'
+            }else{
+                tiles[i].style.backgroundColor = '#a6d1f8'
+            }
+        }
+        
+    }
 
 
     /*
@@ -47,18 +84,18 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-    if (roundWon) {
+        if (roundWon) {
             announce(currentPlayer === 'X' ? PLAYERX_WON : PLAYERO_WON);
             isGameActive = false;
             return;
         }
 
-    if (!board.includes(''))
-        announce(TIE);
+        if (!board.includes(''))
+            announce(TIE);
     }
 
     const announce = (type) => {
-        switch(type){
+        switch (type) {
             case PLAYERO_WON:
                 announcer.innerHTML = 'Player <span class="playerO">O</span> Won';
                 break;
@@ -72,14 +109,14 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     const isValidAction = (tile) => {
-        if (tile.innerText === 'X' || tile.innerText === 'O'){
+        if (tile.innerText === 'X' || tile.innerText === 'O') {
             return false;
         }
 
         return true;
     };
 
-    const updateBoard =  (index) => {
+    const updateBoard = (index) => {
         board[index] = currentPlayer;
     }
 
@@ -91,7 +128,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const userAction = (tile, index) => {
-        if(isValidAction(tile) && isGameActive) {
+        if (isValidAction(tile) && isGameActive) {
             tile.innerText = currentPlayer;
             tile.classList.add(`player${currentPlayer}`);
             updateBoard(index);
@@ -99,7 +136,7 @@ window.addEventListener('DOMContentLoaded', () => {
             changePlayer();
         }
     }
-    
+
     const resetBoard = () => {
         board = ['', '', '', '', '', '', '', '', ''];
         isGameActive = true;
@@ -116,7 +153,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    tiles.forEach( (tile, index) => {
+    tiles.forEach((tile, index) => {
         tile.addEventListener('click', () => userAction(tile, index));
     });
 

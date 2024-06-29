@@ -1,11 +1,61 @@
-* {
-    padding: 0;
-    margin: 0;
-    font-family: 'Itim', cursive;
+html {
+    background-color: #fefbf3;
 }
 
-.background {
-    background-color: #12181B;
+/* color palette - https://www.color-hex.com/color-palette/1047113 */
+
+nav {
+    color: #003c71;
+    background-color: #8bc8ff;
+}
+
+.tile {
+    border: 1px solid black;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 50px;
+    cursor: pointer;
+}
+
+#board {
+    display: flex;
+    margin: 0 auto;
+    width: 800px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 800){
+    nav {
+        color: #8bc8ff;
+        background-color: #003c71;
+    }
+
+    .tile {
+        width: 50px;
+        height: 50px;
+        font-size: 25px;
+    }
+
+    #board {
+        display: flex;
+        margin: 0 auto;
+        width: 400px;
+        flex-wrap: wrap;
+    }
+
+}
+
+/* * {
+    padding: 0;
+    margin: 0;
+    font-family: 'Itim';
+} */
+
+/* .background {
+    background-color: #5f5f5f;
     height: 100vh;
     padding-top: 1px;
 }
@@ -34,19 +84,7 @@
     display: grid;
     grid-template-columns: 33% 33% 33%;
     grid-template-rows: 33% 33% 33%;
-    max-width: 300px;
-
-}
-
-.tile {
-    border: 1px solid white;
-    min-width: 100px;
-    min-height: 100px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 50px;
-    cursor: pointer;
+    max-width: 300px;p
 }
 
 .playerX {
@@ -81,4 +119,4 @@
 
 #reset {
     background-color: #FF3860;
-}
+} */
