@@ -1,19 +1,23 @@
 window.addEventListener('DOMContentLoaded', () => {
     const tiles = Array.from(document.querySelectorAll('.tile'));
+    const audio = document.getElementById("audio");
     // const playerDisplay = document.querySelector('.display-player');
     const resetButton = document.querySelector('#reset');
     const announcer = document.querySelector('.announcer');
 
     let board = [
+        ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
+        ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
         ['', '', '', '', '', '', '', ''],
         ['', '', '', '', '', '', '', ''],
         ['', '', '', '', '', '', '', ''],
         ['', '', '', '', '', '', '', ''],
-        ['', '', '', '', '', '', '', ''],
-        ['', '', '', '', '', '', '', ''],
-        ['', '', '', '', '', '', '', ''],
-        ['', '', '', '', '', '', '', '']
+        ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
+        ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
     ];
+
+    initBoard();
+
     let currentPlayer = 'X';
     let isGameActive = true;
 
@@ -21,34 +25,41 @@ window.addEventListener('DOMContentLoaded', () => {
     const PLAYERO_WON = 'PLAYERO_WON';
     const TIE = 'TIE';
 
-    let incrementor = 0;
-    // for(let i = 0; i < 64; i++){
-    //     if(i%8===0 && i!==0){
-    //         incrementor++;
-    //     }
-    //     if(i%2 === 0){
-    //         tiles[i+incrementor].innerText = "light";
-    //     }
-    // }
-
-    for(let i = 0; i < 64; i++){
-        if(i%2===0){
-            if(Math.floor(i/8)%2===0){
+    for (let i = 0; i < 64; i++) {
+        if (i % 2 === 0) {
+            if (Math.floor(i / 8) % 2 === 0) {
                 tiles[i].style.backgroundColor = '#a6d1f8'
-            }else{
-                tiles[i].style.backgroundColor = "#68b4fc"
-            }
-            
-        }else{
-            if(Math.floor(i/8)%2===0){
+            } else {
                 tiles[i].style.backgroundColor = '#68b4fc'
-            }else{
+            }
+
+        } else {
+            if (Math.floor(i / 8) % 2 === 0) {
+                tiles[i].style.backgroundColor = '#68b4fc'
+            } else {
                 tiles[i].style.backgroundColor = '#a6d1f8'
             }
         }
-        
     }
 
+    function initBoard() {
+        for (let i = 0; i < tiles.length; i++) {
+            let width = tiles[i].offsetWidth;  // Get the width of the tile
+            let height = tiles[i].offsetHeight;  // Get the height of the tile
+            let [row, col] = toBoardIndex(i)
+            if (board[row][col] !== '') {
+                tiles[i].innerHTML = `<img src='images/${board[row][col]}.png' width=${width} height=${height}>`;
+            } else {
+                tiles[i].innerHTML = '';
+            }
+        }
+    }
+
+    function toBoardIndex(index) {
+        let row = parseInt(index / 8)
+        let col = parseInt(index % 8)
+        return [row, col]
+    }
 
     /*
         Indexes within the board
@@ -56,17 +67,6 @@ window.addEventListener('DOMContentLoaded', () => {
         [3] [4] [5]
         [6] [7] [8]
     */
-
-    const winningConditions = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6]
-    ];
 
     function handleResultValidation() {
         let roundWon = false;
@@ -120,34 +120,44 @@ window.addEventListener('DOMContentLoaded', () => {
         board[index] = currentPlayer;
     }
 
-    const changePlayer = () => {
-        playerDisplay.classList.remove(`player${currentPlayer}`);
-        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-        playerDisplay.innerText = currentPlayer;
-        playerDisplay.classList.add(`player${currentPlayer}`);
-    }
+    // const changePlayer = () => {
+    //     playerDisplay.classList.remove(`player${currentPlayer}`);
+    //     currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    //     playerDisplay.innerText = currentPlayer;
+    //     playerDisplay.classList.add(`player${currentPlayer}`);
+    // }
 
     const userAction = (tile, index) => {
         if (isValidAction(tile) && isGameActive) {
             tile.innerText = currentPlayer;
             tile.classList.add(`player${currentPlayer}`);
             updateBoard(index);
-            handleResultValidation();
-            changePlayer();
+            // handleResultValidation();
+            // changePlayer();
+            console.log(index);
         }
     }
 
     const resetBoard = () => {
-        board = ['', '', '', '', '', '', '', '', ''];
+        ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
+            ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
+            ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
         isGameActive = true;
         announcer.classList.add('hide');
 
-        if (currentPlayer === 'O') {
-            changePlayer();
-        }
+        // if (currentPlayer === 'O') {
+        //     changePlayer();
+        // }
+
+        initBoard();
 
         tiles.forEach(tile => {
-            tile.innerText = '';
+            // tile.innerText = '';
             tile.classList.remove('playerX');
             tile.classList.remove('playerO');
         });
@@ -155,7 +165,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     tiles.forEach((tile, index) => {
         tile.addEventListener('click', () => userAction(tile, index));
+        // tile.addEventListener('click', play);
     });
+
+    function play() {
+        audio.play();
+    }
 
     resetButton.addEventListener('click', resetBoard);
 });
