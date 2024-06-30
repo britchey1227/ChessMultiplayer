@@ -1,23 +1,60 @@
 window.addEventListener('DOMContentLoaded', () => {
+
+    let board = [
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '']
+    ];
+
+    function format(obj){
+        return JSON.stringify(obj)
+    }
+
+    //connect the user to the server
+    const ws = new WebSocket("ws://localhost:8080")
+    ws.onopen = () => {
+        ws.send(format({type: 'init-game', data: {}}))
+    }
+
+    ws.onmessage = (event) => {
+        const {type,data} = JSON.parse(event.data)
+        console.log(`Received event with type ${type} and data ${data}`)
+
+        if(type === 'init-game'){
+            board = data
+            colorBoard()
+            initBoard()
+            ws.send(format({type: 'make-move', data: {to: "e4", from: "e2"}}))
+        }
+
+        if(type === 'move-made'){
+            board = data.board
+            colorBoard()
+            initBoard()
+        }
+    }
+
     const tiles = Array.from(document.querySelectorAll('.tile'));
     const audio = document.getElementById("audio");
     // const playerDisplay = document.querySelector('.display-player');
     const resetButton = document.querySelector('#reset');
     const announcer = document.querySelector('.announcer');
 
-    let board = [
-        ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
-        ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
-        ['', '', '', '', '', '', '', ''],
-        ['', '', '', '', '', '', '', ''],
-        ['', '', '', '', '', '', '', ''],
-        ['', '', '', '', '', '', '', ''],
-        ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
-        ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
-    ];
-
-    colorBoard()
-    initBoard()
+    // let board = [
+    //     ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
+    //     ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['', '', '', '', '', '', '', ''],
+    //     ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
+    //     ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
+    // ];
 
     let currentPlayer = 'X';
     let isGameActive = true;
