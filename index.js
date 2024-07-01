@@ -29,7 +29,6 @@ window.addEventListener('DOMContentLoaded', () => {
             board = data
             colorBoard()
             initBoard()
-            // ws.send(format({type: 'make-move', data: {to: "e4", from: "e2"}}))
         }
 
         if (type === 'move-made') {
@@ -84,11 +83,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function initBoard() {
         for (let i = 0; i < tiles.length; i++) {
-            let width = tiles[i].offsetWidth;  // Get the width of the tile
-            let height = tiles[i].offsetHeight;  // Get the height of the tile
             let [row, col] = toBoardIndex(i)
             if (board[row][col] !== '') {
-                tiles[i].innerHTML = `<img class='img-fluid' src='images/${board[row][col]}.png' width=${width} height=${height}>`;
+                tiles[i].innerHTML = `<img class='img-fluid' src='images/${board[row][col]}.png'>`;
             } else {
                 tiles[i].innerHTML = '';
             }
@@ -169,11 +166,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
     let flg = false;
     let lastClickedTile = ''
+    let temp = 0;
     const userAction = (tile, index) => {
         if (isValidAction(tile) && isGameActive) {
             colorBoard();
             if(lastClickedTile === tile){
                 lastClickedTile = '';
+                //when same tile clicked, send a move
+                //use this to see/test move being displayed to all users
+                ws.send(format({type: 'make-move', data: {to: "e4", from: "e2"}}))
             } else {
                 tile.style.backgroundColor = "rgba(0, 29, 54, .75)";
                 lastClickedTile = tile;

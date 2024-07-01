@@ -22,6 +22,7 @@ const game = {
     board: null,
     p1: null,
     p2: null,
+    spec: [],
     turn: 'w'
 }
 
@@ -89,7 +90,13 @@ function handleMessage(ws, payload) {
     switch (type) {
         case 'init-game':
             game.board = startingBoard
-            ws.send(format({ type: 'init-game', data: startingBoard }));
+
+            //if black send reversed board, else send normal board
+            if(ws === game.p2){
+                ws.send(format({ type: 'init-game', data: startingBoard.toReversed()}));
+            } else {
+                ws.send(format({ type: 'init-game', data: startingBoard }));
+            }
             return
         case 'make-move':
             if (!isTurn(ws)) {
@@ -111,8 +118,11 @@ function handleMessage(ws, payload) {
 
             makeMove(data)
             toggleTurn(game)
-            ws.send(format({ type: 'move-made', data: { board: game.board } }));
-            // Also, send this to othe player
+            game.p1.send(format({ type: 'move-made', data: { board: game.board } }));   //send to white
+            game.p2.send(format({ type: 'move-made', data: { board: game.board.toReversed() } }));   //send reversed board to black
+            for(let client of game.spec){
+                client.send(format({ type: 'move-made', data: { board: game.board } }));    //send to each spec
+            }
             return
         default:
             ws.send(format({ type: 'unkown-message', data: `Uknown message with type ${type} and data ${data}` }));
@@ -125,16 +135,19 @@ function format(data) {
 
 function handleConnect(ws) {
     if (!game.p1) {
+        //white
         game.p1 = ws
         const payload = format({ type: 'welcome', data: { player: 'p1' } })
         ws.send(payload);
     } else if (!game.p2) {
+        //black
         game.p2 = ws
         const payload = format({ type: 'welcome', data: { player: 'p2' } })
         ws.send(payload);
     } else {
-        // CONSIDER MAKING THIS PERSON A SPECTATOR
-        const payload = format({ type: 'welcome', data: 'Server full' })
+        //spectator
+        game.spec.push(ws);
+        const payload = format({ type: 'welcome', data: 'Spectating' })
         ws.send(payload);
     }
 
