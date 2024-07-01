@@ -11,28 +11,28 @@ window.addEventListener('DOMContentLoaded', () => {
         ['', '', '', '', '', '', '', '']
     ];
 
-    function format(obj){
+    function format(obj) {
         return JSON.stringify(obj)
     }
 
     //connect the user to the server
     const ws = new WebSocket("ws://localhost:8080")
     ws.onopen = () => {
-        ws.send(format({type: 'init-game', data: {}}))
+        ws.send(format({ type: 'init-game', data: {} }))
     }
 
     ws.onmessage = (event) => {
-        const {type,data} = JSON.parse(event.data)
+        const { type, data } = JSON.parse(event.data)
         console.log(`Received event with type ${type} and data ${data}`)
 
-        if(type === 'init-game'){
+        if (type === 'init-game') {
             board = data
             colorBoard()
             initBoard()
-            ws.send(format({type: 'make-move', data: {to: "e4", from: "e2"}}))
+            // ws.send(format({type: 'make-move', data: {to: "e4", from: "e2"}}))
         }
 
-        if(type === 'move-made'){
+        if (type === 'move-made') {
             board = data.board
             colorBoard()
             initBoard()
@@ -62,21 +62,21 @@ window.addEventListener('DOMContentLoaded', () => {
     const PLAYERX_WON = 'PLAYERX_WON';
     const PLAYERO_WON = 'PLAYERO_WON';
     const TIE = 'TIE';
-    
-    function colorBoard(){
+
+    function colorBoard() {
         for (let i = 0; i < 64; i++) {
             if (i % 2 === 0) {
                 if (Math.floor(i / 8) % 2 === 0) {
-                    tiles[i].style.backgroundColor = '#a6d1f8'
+                    tiles[i].style.backgroundColor = 'rgba(166, 209, 248, 0.75)'
                 } else {
-                    tiles[i].style.backgroundColor = '#68b4fc'
+                    tiles[i].style.backgroundColor = 'rgba(104, 180, 252, 0.75)'
                 }
-    
+
             } else {
                 if (Math.floor(i / 8) % 2 === 0) {
-                    tiles[i].style.backgroundColor = '#68b4fc'
+                    tiles[i].style.backgroundColor = 'rgba(104, 180, 252, 0.75)'
                 } else {
-                    tiles[i].style.backgroundColor = '#a6d1f8'
+                    tiles[i].style.backgroundColor = 'rgba(166, 209, 248, 0.75)'
                 }
             }
         }
@@ -88,7 +88,7 @@ window.addEventListener('DOMContentLoaded', () => {
             let height = tiles[i].offsetHeight;  // Get the height of the tile
             let [row, col] = toBoardIndex(i)
             if (board[row][col] !== '') {
-                tiles[i].innerHTML = `<img src='images/${board[row][col]}.png' width=${width} height=${height}>`;
+                tiles[i].innerHTML = `<img class='img-fluid' src='images/${board[row][col]}.png' width=${width} height=${height}>`;
             } else {
                 tiles[i].innerHTML = '';
             }
@@ -167,9 +167,17 @@ window.addEventListener('DOMContentLoaded', () => {
     //     playerDisplay.classList.add(`player${currentPlayer}`);
     // }
 
+    let flg = false;
+    let lastClickedTile = ''
     const userAction = (tile, index) => {
         if (isValidAction(tile) && isGameActive) {
-            tile.style.backgroundColor = "red";
+            colorBoard();
+            if(lastClickedTile === tile){
+                lastClickedTile = '';
+            } else {
+                tile.style.backgroundColor = "rgba(0, 29, 54, .75)";
+                lastClickedTile = tile;
+            }
             tile.classList.add(`player${currentPlayer}`);
             updateBoard(index);
             // handleResultValidation();
@@ -209,7 +217,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     tiles.forEach((tile, index) => {
         tile.addEventListener('click', () => userAction(tile, index));
-        // tile.addEventListener('click', play);
+        tile.addEventListener('click', play);
     });
 
     function play() {
