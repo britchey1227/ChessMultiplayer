@@ -1,5 +1,5 @@
+// TODO: Set current player based on response from init game (hasn't been inited yet)
 window.addEventListener('DOMContentLoaded', () => {
-
     let board = [
         ['', '', '', '', '', '', '', ''],
         ['', '', '', '', '', '', '', ''],
@@ -10,6 +10,22 @@ window.addEventListener('DOMContentLoaded', () => {
         ['', '', '', '', '', '', '', ''],
         ['', '', '', '', '', '', '', '']
     ];
+
+    const tiles = Array.from(document.querySelectorAll('.tile'));
+    colorBoard()
+
+    const audio = document.getElementById("audio");
+    // const playerDisplay = document.querySelector('.display-player');
+    const resetButton = document.querySelector('#reset');
+    const announcer = document.querySelector('.announcer');
+
+    // TODO: Set currentPlayer based on response from init-game
+    let currentPlayer = null;
+    let isGameActive = true;
+
+    const WHITE = 'w'
+    const BLACK = 'b'
+    const TIE = 'TIE';
 
     function format(obj) {
         return JSON.stringify(obj)
@@ -23,44 +39,34 @@ window.addEventListener('DOMContentLoaded', () => {
 
     ws.onmessage = (event) => {
         const { type, data } = JSON.parse(event.data)
-        console.log(`Received event with type ${type} and data ${data}`)
+        console.log(`Received event with type ${type} and data ${JSON.stringify(data)}`)
 
         if (type === 'init-game') {
             board = data
-            colorBoard()
-            initBoard()
+            syncBoard()
         }
 
         if (type === 'move-made') {
             board = data.board
-            colorBoard()
-            initBoard()
+            syncBoard()
+        }
+
+        // TODO: Implement on server
+        if (type === 'game-over') {
+            const winner = data.winner
+            board = data.board
+            syncBoard()
+            isGameActive = false
+            announce(winner)
+        }
+
+        if (type === 'game-reset') {
+            board = data.board
+            syncBoard()
+            hideAnnounce()
+            isGameActive = true;
         }
     }
-
-    const tiles = Array.from(document.querySelectorAll('.tile'));
-    const audio = document.getElementById("audio");
-    // const playerDisplay = document.querySelector('.display-player');
-    const resetButton = document.querySelector('#reset');
-    const announcer = document.querySelector('.announcer');
-
-    // let board = [
-    //     ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
-    //     ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
-    //     ['', '', '', '', '', '', '', ''],
-    //     ['', '', '', '', '', '', '', ''],
-    //     ['', '', '', '', '', '', '', ''],
-    //     ['', '', '', '', '', '', '', ''],
-    //     ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
-    //     ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
-    // ];
-
-    let currentPlayer = 'X';
-    let isGameActive = true;
-
-    const PLAYERX_WON = 'PLAYERX_WON';
-    const PLAYERO_WON = 'PLAYERO_WON';
-    const TIE = 'TIE';
 
     function colorBoard() {
         for (let i = 0; i < 64; i++) {
@@ -81,7 +87,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function initBoard() {
+    function syncBoard() {
         for (let i = 0; i < tiles.length; i++) {
             let [row, col] = toBoardIndex(i)
             if (board[row][col] !== '') {
@@ -98,132 +104,58 @@ window.addEventListener('DOMContentLoaded', () => {
         return [row, col]
     }
 
-    /*
-        Indexes within the board
-        [0] [1] [2]
-        [3] [4] [5]
-        [6] [7] [8]
-    */
-
-    function handleResultValidation() {
-        let roundWon = false;
-        for (let i = 0; i <= 7; i++) {
-            const winCondition = winningConditions[i];
-            const a = board[winCondition[0]];
-            const b = board[winCondition[1]];
-            const c = board[winCondition[2]];
-            if (a === '' || b === '' || c === '') {
-                continue;
-            }
-            if (a === b && b === c) {
-                roundWon = true;
-                break;
-            }
-        }
-
-        if (roundWon) {
-            announce(currentPlayer === 'X' ? PLAYERX_WON : PLAYERO_WON);
-            isGameActive = false;
-            return;
-        }
-
-        if (!board.includes(''))
-            announce(TIE);
-    }
-
     const announce = (type) => {
         switch (type) {
-            case PLAYERO_WON:
-                announcer.innerHTML = 'Player <span class="playerO">O</span> Won';
+            case WHITE:
+                announcer.innerHTML = 'White Wins!';
                 break;
-            case PLAYERX_WON:
-                announcer.innerHTML = 'Player <span class="playerX">X</span> Won';
+            case BLACK:
+                announcer.innerHTML = 'Black Wins!';
                 break;
             case TIE:
-                announcer.innerText = 'Tie';
+                announcer.innerText = 'Tie...';
         }
         announcer.classList.remove('hide');
     };
 
-    const isValidAction = (tile) => {
-        if (tile.innerText === 'X' || tile.innerText === 'O') {
-            return false;
-        }
+    const hideAnnounce = () => {
+        announcer.classList.add('hide');
+    }
 
+    const isValidAction = (tile) => {
+        // TODO: Some basic validation later. But let server do the validation for now
         return true;
     };
 
-    const updateBoard = (index) => {
-        board[index] = currentPlayer;
-    }
-
-    // const changePlayer = () => {
-    //     playerDisplay.classList.remove(`player${currentPlayer}`);
-    //     currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-    //     playerDisplay.innerText = currentPlayer;
-    //     playerDisplay.classList.add(`player${currentPlayer}`);
-    // }
-
-    let flg = false;
-    let lastClickedTile = ''
-    let temp = 0;
+    let lastClickedTile = null
     const userAction = (tile, index) => {
+        console.log(tile)
         if (isValidAction(tile) && isGameActive) {
-            colorBoard();
-            if(lastClickedTile === tile){
-                lastClickedTile = '';
-                //when same tile clicked, send a move
-                //use this to see/test move being displayed to all users
-                ws.send(format({type: 'make-move', data: {to: "e4", from: "e2"}}))
-            } else {
+            if (!lastClickedTile) {
                 tile.style.backgroundColor = "rgba(0, 29, 54, .75)";
                 lastClickedTile = tile;
+            } else if (lastClickedTile === tile) {
+                colorBoard()
+                lastClickedTile = null;
+            } else {
+                const from = lastClickedTile.id
+                const to = tile.id
+
+                colorBoard()
+                lastClickedTile = null;
+                ws.send(format({ type: 'make-move', data: { to, from } }))
             }
-            tile.classList.add(`player${currentPlayer}`);
-            updateBoard(index);
-            // handleResultValidation();
-            // changePlayer();
-            console.log(index);
         }
-    }
-
-    const resetBoard = () => {
-        board = [
-            ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
-            ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
-            ['', '', '', '', '', '', '', ''],
-            ['', '', '', '', '', '', '', ''],
-            ['', '', '', '', '', '', '', ''],
-            ['', '', '', '', '', '', '', ''],
-            ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
-            ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
-        ];
-
-        isGameActive = true;
-        announcer.classList.add('hide');
-
-        // if (currentPlayer === 'O') {
-        //     changePlayer();
-        // }
-
-        colorBoard();
-        initBoard();
-
-        tiles.forEach(tile => {
-            // tile.innerText = '';
-            tile.classList.remove('playerX');
-            tile.classList.remove('playerO');
-        });
     }
 
     tiles.forEach((tile, index) => {
         tile.addEventListener('click', () => userAction(tile, index));
-        tile.addEventListener('click', play);
+        // tile.addEventListener('click', audio.play);
     });
 
-    function play() {
-        audio.play();
+    function resetGame() {
+        ws.send(format({ type: 'reset-game', data: {} }))
     }
 
-    resetButton.addEventListener('click', resetBoard);
+    resetButton.addEventListener('click', resetGame);
 });

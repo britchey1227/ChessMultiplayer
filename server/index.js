@@ -1,11 +1,5 @@
+// TODO: user emit instead of sending to each connection (might need socket.io)
 import { WebSocketServer } from 'ws';
-
-// p = pawn
-// b = bishop
-// n = knight
-// r = rook
-// q = queen
-// k = king
 
 let startingBoard = [
     ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR',],
@@ -65,9 +59,7 @@ function isValidMove({ to, from }) {
     const [toFile, toRank] = [to[0], parseInt(to[1])]
 
     const [fromRow, fromCol] = getIndexesGivenFileRank({ file: fromFile, rank: fromRank })
-    console.log('fromRow', fromRow, 'fromCol', fromCol)
     const [toRow, toCol] = getIndexesGivenFileRank({ file: toFile, rank: toRank })
-    console.log('toRow', toRow, 'toCol', toCol)
 
     // check rows
     if (fromRow < 0 || toRow < 0 || fromRow >= 8 || toRow >= 8) return false
@@ -89,13 +81,12 @@ function handleMessage(ws, payload) {
 
     switch (type) {
         case 'init-game':
-            game.board = startingBoard
-
-            //if black send reversed board, else send normal board
-            if(ws === game.p2){
-                ws.send(format({ type: 'init-game', data: startingBoard.toReversed()}));
+            game.board = structuredClone(startingBoard)
+            if (ws === game.p2) {
+                // TODO: Reverse the board before sending
+                ws.send(format({ type: 'init-game', data: structuredClone(game.board) }));
             } else {
-                ws.send(format({ type: 'init-game', data: startingBoard }));
+                ws.send(format({ type: 'init-game', data: structuredClone(game.board) }));
             }
             return
         case 'make-move':
@@ -118,10 +109,30 @@ function handleMessage(ws, payload) {
 
             makeMove(data)
             toggleTurn(game)
-            game.p1.send(format({ type: 'move-made', data: { board: game.board } }));   //send to white
-            game.p2.send(format({ type: 'move-made', data: { board: game.board.toReversed() } }));   //send reversed board to black
-            for(let client of game.spec){
+            if (game.p1) {
+                game.p1.send(format({ type: 'move-made', data: { board: game.board } }));   //send to white
+            }
+            if (game.p2) {
+                // TODO: Reverse board later
+                game.p2.send(format({ type: 'move-made', data: { board: game.board } }));   //send reversed board to black
+            }
+
+            for (let client of game.spec) {
                 client.send(format({ type: 'move-made', data: { board: game.board } }));    //send to each spec
+            }
+            return
+        case 'reset-game':
+            game.board = structuredClone(startingBoard)
+            if (game.p1) {
+                game.p1.send(format({ type: 'game-reset', data: { board: game.board } }));   //send to white
+            }
+            if (game.p2) {
+                // TODO: Reverse board later
+                game.p2.send(format({ type: 'game-reset', data: { board: game.board } }));   //send reversed board to black
+            }
+
+            for (let client of game.spec) {
+                client.send(format({ type: 'game-reset', data: { board: game.board } }));    //send to each spec
             }
             return
         default:
