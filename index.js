@@ -1,4 +1,3 @@
-// TODO: Set current player based on response from init game (hasn't been inited yet)
 window.addEventListener('DOMContentLoaded', () => {
     let board = [
         ['', '', '', '', '', '', '', ''],
@@ -19,7 +18,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const resetButton = document.querySelector('#reset');
     const announcer = document.querySelector('.announcer');
 
-    // TODO: Set currentPlayer based on response from init-game
     let currentPlayer = null;
     let isGameActive = true;
 
@@ -40,6 +38,14 @@ window.addEventListener('DOMContentLoaded', () => {
     ws.onmessage = (event) => {
         const { type, data } = JSON.parse(event.data)
         console.log(`Received event with type ${type} and data ${JSON.stringify(data)}`)
+
+        if(type === 'welcome') {
+             // if we ever add more info to the player object sent on connect, change to just data to get all necessary info
+             currentPlayer = data.player;
+             if(currentPlayer === 'p2'){ // if we are black, flip the ids on the tiles of the board
+                flipBoard();
+             }
+        }
 
         if (type === 'init-game') {
             board = data
@@ -69,7 +75,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function colorBoard() {
-        for (let i = 0; i < 64; i++) {
+        for (let i = 0; i < tiles.length; i++) {
             if (i % 2 === 0) {
                 if (Math.floor(i / 8) % 2 === 0) {
                     tiles[i].style.backgroundColor = 'rgba(166, 209, 248, 0.75)'
@@ -102,6 +108,14 @@ window.addEventListener('DOMContentLoaded', () => {
         let row = parseInt(index / 8)
         let col = parseInt(index % 8)
         return [row, col]
+    }
+
+    function flipBoard(){
+        for(let i = 0; i < tiles.length/2; i++){
+            let temp = tiles[i].id
+            tiles[i].id = tiles[tiles.length - 1 - i].id
+            tiles[tiles.length - 1 - i].id = temp
+        }
     }
 
     const announce = (type) => {
@@ -140,7 +154,6 @@ window.addEventListener('DOMContentLoaded', () => {
             } else {
                 const from = lastClickedTile.id
                 const to = tile.id
-
                 colorBoard()
                 lastClickedTile = null;
                 ws.send(format({ type: 'make-move', data: { to, from } }))

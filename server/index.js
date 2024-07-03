@@ -30,6 +30,14 @@ function getIndexesGivenFileRank({ file, rank }) {
     return [row, col]
 }
 
+function reverseBoard(board){
+    let result = board.toReversed()
+    for(let i = 0; i < board.length; i++){
+        result[i] = result[i].toReversed();
+    }
+    return result;
+}
+
 function makeMove({ to, from }) {
     console.log(`Making move from ${from} to ${to}...`)
     const [fromFile, fromRank] = [from[0], parseInt(from[1])]
@@ -84,7 +92,7 @@ function handleMessage(ws, payload) {
             game.board = structuredClone(startingBoard)
             if (ws === game.p2) {
                 // TODO: Reverse the board before sending
-                ws.send(format({ type: 'init-game', data: structuredClone(game.board) }));
+                ws.send(format({ type: 'init-game', data: structuredClone(reverseBoard(game.board)) }));
             } else {
                 ws.send(format({ type: 'init-game', data: structuredClone(game.board) }));
             }
@@ -114,7 +122,7 @@ function handleMessage(ws, payload) {
             }
             if (game.p2) {
                 // TODO: Reverse board later
-                game.p2.send(format({ type: 'move-made', data: { board: game.board } }));   //send reversed board to black
+                game.p2.send(format({ type: 'move-made', data: { board: reverseBoard(game.board) } }));   //send reversed board to black
             }
 
             for (let client of game.spec) {
@@ -128,7 +136,7 @@ function handleMessage(ws, payload) {
             }
             if (game.p2) {
                 // TODO: Reverse board later
-                game.p2.send(format({ type: 'game-reset', data: { board: game.board } }));   //send reversed board to black
+                game.p2.send(format({ type: 'game-reset', data: { board: reverseBoard(game.board) } }));   //send reversed board to black
             }
 
             for (let client of game.spec) {
@@ -158,7 +166,7 @@ function handleConnect(ws) {
     } else {
         //spectator
         game.spec.push(ws);
-        const payload = format({ type: 'welcome', data: 'Spectating' })
+        const payload = format({ type: 'welcome', data: { player: 'spec' } })
         ws.send(payload);
     }
 
