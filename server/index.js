@@ -87,9 +87,145 @@ function isValidMove({ to, from }) {
   // check cols
   if (fromCol < 0 || toCol < 0 || fromCol >= 8 || toCol >= 8) return false;
 
-  // CHECK IF FROM IS EMPTY
-
   // More chess logic...
+
+  // brainstorming: if we want to display valid moves to user before they do a move
+  // once clicked on a from piece, ask to view valid moves
+  // valid moves would send back an empty board with only valid moves (x = valid, '' = invalid)
+  // front end colors only x's to display valid (maybe add class valid to tile)
+  // check if to is valid, if yes send move
+  // simple front end, simpler back end than having to send valid moves to display on front end then determine if the move is valid
+
+  // TODO:
+  // each piece logic will be updated to a function inside each object
+  // still need collision check
+  // optimize the hard code
+  // check logic & checkmate logic
+  // en pessent in pawn moves
+  // castling in king moves
+
+  // bishop
+  if (game.board[fromRow][fromCol][1] === "B") {
+    // check if to falls into the diagonals
+    for (let i = fromRow, j = fromCol; i < 8 && j < 8; i++, j++) {
+      if (i === toRow && j == toCol) return true;
+    }
+    for (let i = fromRow, j = fromCol; i < 8 && j >= 0; i++, j--) {
+      if (i === toRow && j == toCol) return true;
+    }
+    for (let i = fromRow, j = fromCol; i >= 0 && j < 8; i--, j++) {
+      if (i === toRow && j == toCol) return true;
+    }
+    for (let i = fromRow, j = fromCol; i >= 0 && j >= 0; i--, j--) {
+      if (i === toRow && j == toCol) return true;
+    }
+    return false;
+  }
+
+  // rook
+  if (game.board[fromRow][fromCol][1] === "R") {
+    if (fromCol === toCol || fromRow === toRow) return true;
+    return false;
+  }
+
+  // queen
+  if (game.board[fromRow][fromCol][1] === "Q") {
+    // check if to falls into the diagonals
+    for (let i = fromRow, j = fromCol; i < 8 && j < 8; i++, j++) {
+      if (i === toRow && j == toCol) return true;
+    }
+    for (let i = fromRow, j = fromCol; i < 8 && j >= 0; i++, j--) {
+      if (i === toRow && j == toCol) return true;
+    }
+    for (let i = fromRow, j = fromCol; i >= 0 && j < 8; i--, j++) {
+      if (i === toRow && j == toCol) return true;
+    }
+    for (let i = fromRow, j = fromCol; i >= 0 && j >= 0; i--, j--) {
+      if (i === toRow && j == toCol) return true;
+    }
+    if (fromCol === toCol || fromRow === toRow) return true;
+    return false;
+  }
+
+  //knight
+  if (game.board[fromRow][fromCol][1] === "N") {
+    if (fromRow + 1 === toRow && fromCol + 2 == toCol) return true;
+    if (fromRow + 1 === toRow && fromCol - 2 == toCol) return true;
+    if (fromRow + 2 === toRow && fromCol + 1 == toCol) return true;
+    if (fromRow + 2 === toRow && fromCol - 1 == toCol) return true;
+    if (fromRow - 1 === toRow && fromCol + 2 == toCol) return true;
+    if (fromRow - 1 === toRow && fromCol - 2 == toCol) return true;
+    if (fromRow - 2 === toRow && fromCol + 1 == toCol) return true;
+    if (fromRow - 2 === toRow && fromCol - 1 == toCol) return true;
+    return false;
+  }
+
+  //pawn
+  if (game.board[fromRow][fromCol][1] === "P") {
+    //TODO: Add en pessent
+    //black
+    if (game.board[fromRow][fromCol][0] === "b") {
+      if (fromRow === 1) {
+        //if pawn hasnt moved
+        if (fromRow + 1 === toRow) {
+          if (game.board[toRow][toCol] === "") return true;
+          return false;
+        } else if (fromRow + 2 === toRow) {
+          if (
+            game.board[fromRow + 1][toCol] === "" &&
+            game.board[fromRow + 2][toCol] === ""
+          )
+            return true;
+          return false;
+        }
+      } else if (fromRow + 1 === toRow) {
+        if (fromCol === toCol && game.board[toRow][toCol] === "") return true;
+        if (fromCol + 1 === toCol && game.board[toRow][toCol][0] === "w")
+          return true;
+        if (fromCol - 1 === toCol && game.board[toRow][toCol][0] === "w")
+          return true;
+      }
+    }
+    //white
+    if (game.board[fromRow][fromCol][0] === "w") {
+      if (fromRow === 6) {
+        //if pawn hasnt moved
+        if (fromRow - 1 === toRow) {
+          if (game.board[toRow][toCol] === "") return true;
+          return false;
+        } else if (fromRow - 2 === toRow) {
+          if (
+            game.board[fromRow - 1][toCol] === "" &&
+            game.board[fromRow - 2][toCol] === ""
+          )
+            return true;
+          return false;
+        }
+      } else if (fromRow - 1 === toRow) {
+        if (fromCol === toCol && game.board[toRow][toCol] === "") return true;
+        if (fromCol + 1 === toCol && game.board[toRow][toCol][0] === "b")
+          return true;
+        if (fromCol - 1 === toCol && game.board[toRow][toCol][0] === "b")
+          return true;
+      }
+    }
+    return false;
+  }
+
+  // king
+  if (game.board[fromRow][fromCol][1] === "K") {
+    // TODO: add castling
+    if (fromRow + 1 === toRow) {
+      if (fromCol === toCol || fromCol - 1 === toCol || fromCol + 1 === toCol)
+        return true;
+    } else if (fromRow - 1 === toRow) {
+      if (fromCol === toCol || fromCol - 1 === toCol || fromCol + 1 === toCol)
+        return true;
+    } else if (fromRow === toRow) {
+      if (fromCol - 1 === toCol || fromCol + 1 === toCol) return true;
+    }
+    return false;
+  }
 
   return true;
 }
@@ -97,10 +233,11 @@ function isValidMove({ to, from }) {
 function handleMessage(ws, payload) {
   console.log(`Recieved: ${payload}`);
   const { type, data } = JSON.parse(payload);
-    
+
   switch (type) {
     case "init-game":
-        // BUG: if white plays a move then black connects, black does not see the move then the board resets as if black has first move
+      // BUG: everytime a new user connects it resets the board, so game can be halfway done and spec joins and resets the board
+      // SOLUTION: send current board rather than making it startingBoard, only reset on initial connect for white and on reset button
       game.board = structuredClone(startingBoard);
       if (ws === game.p2) {
         ws.send(
@@ -128,6 +265,7 @@ function handleMessage(ws, payload) {
         return;
       }
       if (!isValidMove(data)) {
+        // TODO: add move to a move list in the game
         ws.send(
           format({
             type: "invalid-move",
@@ -161,7 +299,7 @@ function handleMessage(ws, payload) {
       return;
     case "reset-game":
       game.board = structuredClone(startingBoard);
-      game.turn = "w"
+      game.turn = "w";
       if (game.p1) {
         game.p1.send(
           format({ type: "game-reset", data: { board: game.board } })
