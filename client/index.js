@@ -1,3 +1,5 @@
+import { io } from 'socket.io-client'
+
 window.addEventListener("DOMContentLoaded", () => {
   let board = [
     ["", "", "", "", "", "", "", ""],
@@ -26,60 +28,64 @@ window.addEventListener("DOMContentLoaded", () => {
   const BLACK = "b";
   const DRAW = "DRAW";
 
-  function format(obj) {
-    return JSON.stringify(obj);
+  function debug(type,message){
+    console.log(
+      `Received event with type ${type} and data ${JSON.stringify(message)}`
+    );
   }
 
-  //connect the user to the server
-  const ws = new WebSocket("ws://localhost:3000");
-  ws.onopen = () => {
-    ws.send(format({ type: "init-game", data: {} }));
-  };
-
-  ws.onmessage = (event) => {
-    const { type, data } = JSON.parse(event.data);
-    console.log(
-      `Received event with type ${type} and data ${JSON.stringify(data)}`
-    );
-
-    if (type === "welcome") {
-      // if we ever add more info to the player object sent on connect, change to just data to get all necessary info
+  const socket = io('http://localhost:3000')
+  handleMessages(socket)
+  function handleMessages(socket){
+    socket.on('connect',()=>{
+      debug('connect',{})
+      socket.emit('init-game',{})
+    })
+    
+    socket.on('welcome',(data)=>{
+      debug('welcome',data)
       currentPlayer = data.player;
-      if (currentPlayer === "p2") {
-        // if we are black, flip the ids on the tiles of the board
-        flipBoard();
-        playerColor = BLACK;
-      } else {
-        playerColor = WHITE;
-      }
-    }
-
-    if (type === "init-game") {
-      board = data;
-      syncBoard();
-    }
-
-    if (type === "move-made") {
+          if (currentPlayer === "p2") {
+            // if we are black, flip the ids on the tiles of the board
+            flipBoard();
+            playerColor = BLACK;
+          } else {
+            playerColor = WHITE;
+          }
+    })
+    
+    socket.on('init-game',(data)=>{
+      debug('init-game',data)
+        board = data;
+        syncBoard();
+    })
+    
+    socket.on('move-made',(data)=>{
+      debug('move-made',data)
       board = data.board;
       syncBoard();
-    }
-
-    // TODO: Implement on server
-    if (type === "game-over") {
+    })
+    
+    socket.on('game-over',(data)=>{
+      debug('game-over',data)
       const winner = data.winner;
       board = data.board;
       syncBoard();
       isGameActive = false;
       announce(winner);
-    }
-
-    if (type === "game-reset") {
+    })
+    
+    socket.on('game-reset',(data)=>{
+      debug('game-reset',data)
       board = data.board;
       syncBoard();
       hideAnnounce();
       isGameActive = true;
-    }
-  };
+    })
+  }
+
+
+
 
   function colorBoard() {
     for (let i = 0; i < tiles.length; i++) {
@@ -161,7 +167,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   let lastClickedTile = null;
   const userAction = (tile, index) => {
-    console.log(tile);
     if (isValidAction(tile) && isGameActive) {
       if (!lastClickedTile || tileToPiece(lastClickedTile) === '' || tileToPiece(tile)[0] === playerColor) {   //if no previous tile, if from is empty, if to is of same color
         colorBoard()
@@ -175,7 +180,7 @@ window.addEventListener("DOMContentLoaded", () => {
         const to = tile.id;
         colorBoard();
         lastClickedTile = null;
-        ws.send(format({ type: "make-move", data: { to, from } }));
+        socket.emit('make-move',{ to, from })
       }
     }
   };
@@ -186,7 +191,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   function resetGame() {
-    ws.send(format({ type: "reset-game", data: {} }));
+    socket.emit('reset-game',{})
   }
 
   resetButton.addEventListener("click", resetGame);

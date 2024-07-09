@@ -1,5 +1,6 @@
 // TODO: user emit instead of sending to each connection (might need socket.io)
-import { WebSocketServer } from "ws";
+
+import {Server} from 'socket.io'
 
 let startingBoard = [
   ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
@@ -62,9 +63,9 @@ function toggleTurn() {
   game.turn = game.turn === "w" ? "b" : "w";
 }
 
-function isTurn(ws) {
-  if (game.turn === "w") return ws === game.p1;
-  return ws === game.p2;
+function isTurn(socket) {
+  if (game.turn === "w") return socket.id === game.p1;
+  return socket.id === game.p2;
 }
 
 function isValidMove({ to, from }) {
@@ -230,134 +231,108 @@ function isValidMove({ to, from }) {
   return true;
 }
 
-function handleMessage(ws, payload) {
-  console.log(`Recieved: ${payload}`);
-  const { type, data } = JSON.parse(payload);
-
-  switch (type) {
-    case "init-game":
-      // BUG: everytime a new user connects it resets the board, so game can be halfway done and spec joins and resets the board
-      // SOLUTION: send current board rather than making it startingBoard, only reset on initial connect for white and on reset button
-      game.board = structuredClone(startingBoard);
-      if (ws === game.p2) {
-        ws.send(
-          format({
-            type: "init-game",
-            data: structuredClone(reverseBoard(game.board)),
-          })
-        );
-      } else {
-        ws.send(
-          format({ type: "init-game", data: structuredClone(game.board) })
-        );
-      }
-      return;
-    case "make-move":
-      if (!isTurn(ws)) {
-        ws.send(
-          format({
-            type: "invalid-move",
-            data: {
-              message: "Not your move bruv",
-            },
-          })
-        );
-        return;
-      }
-      if (!isValidMove(data)) {
-        // TODO: add move to a move list in the game
-        ws.send(
-          format({
-            type: "invalid-move",
-            data: {
-              message: `Move from ${data.from} to ${data.to} is not valid`,
-            },
-          })
-        );
-        return;
-      }
-
-      makeMove(data);
-      toggleTurn(game);
-      if (game.p1) {
-        game.p1.send(
-          format({ type: "move-made", data: { board: game.board } })
-        ); //send to white
-      }
-      if (game.p2) {
-        game.p2.send(
-          format({
-            type: "move-made",
-            data: { board: reverseBoard(game.board) },
-          })
-        ); //send reversed board to black
-      }
-
-      for (let client of game.spec) {
-        client.send(format({ type: "move-made", data: { board: game.board } })); //send to each spec
-      }
-      return;
-    case "reset-game":
-      game.board = structuredClone(startingBoard);
-      game.turn = "w";
-      if (game.p1) {
-        game.p1.send(
-          format({ type: "game-reset", data: { board: game.board } })
-        ); //send to white
-      }
-      if (game.p2) {
-        game.p2.send(
-          format({
-            type: "game-reset",
-            data: { board: reverseBoard(game.board) },
-          })
-        ); //send reversed board to black
-      }
-
-      for (let client of game.spec) {
-        client.send(
-          format({ type: "game-reset", data: { board: game.board } })
-        ); //send to each spec
-      }
-      return;
-    default:
-      ws.send(
-        format({
-          type: "unkown-message",
-          data: `Uknown message with type ${type} and data ${data}`,
-        })
-      );
-  }
-}
-
 function format(data) {
   return JSON.stringify(data);
 }
 
-function handleConnect(ws) {
+function handleConnect(io,socket) {
+  console.log(`New connection ${socket.id}`)
+  let data;
   if (!game.p1) {
     //white
-    game.p1 = ws;
-    const payload = format({ type: "welcome", data: { player: "p1" } });
-    ws.send(payload);
+    game.p1 = socket.id;
+    data = {player:'p1'}    
   } else if (!game.p2) {
     //black
-    game.p2 = ws;
-    const payload = format({ type: "welcome", data: { player: "p2" } });
-    ws.send(payload);
+    game.p2 = socket.id;
+    data = {player:'p2'}
   } else {
     //spectator
-    game.spec.push(ws);
-    const payload = format({ type: "welcome", data: { player: "spec" } });
-    ws.send(payload);
+    game.spec.push(socket.id);
+    data = { player: "spec" }
   }
+
+  io.in(socket.id).emit("welcome",data)
 }
 
-const wss = new WebSocketServer({ port: 3000 });
-wss.on("connection", function connection(ws) {
-  handleConnect(ws);
-  ws.on("message", function message(data) {
-    handleMessage(ws, data);
-  });
-});
-console.log("listening");
+function handleMessages(io,socket){
+  socket.on('init-game',()=>{
+    debug('init-game')
+     // BUG: everytime a new user connects it resets the board, so game can be halfway done and spec joins and resets the board
+      // SOLUTION: send current board rather than making it startingBoard, only reset on initial connect for white and on reset button
+      game.board = structuredClone(startingBoard);
+      
+      if (socket.id === game.p2) {
+        io.in(socket.id).emit("init-game",structuredClone(reverseBoard(game.board)))
+      } else {
+        io.in(socket.id).emit("init-game",structuredClone(game.board))
+      }
+  })
+
+  socket.on('make-move',(data)=>{
+    debug('make-move',data)
+    if (!isTurn(socket)) {
+      io.in(socket.id).emit('invalid-movde', {
+        message: "Not your move bruv",
+      })
+     return
+    }
+    if (!isValidMove(data)) {
+      // TODO: add move to a move list in the game
+       io.in(socket.id).emit('invalid-move', {
+        message: `Move from ${data.from} to ${data.to} is not valid`,
+      })
+
+     return
+    }
+
+    makeMove(data);
+    toggleTurn(game);
+
+    // socket.emit('move-made',{ board: game.board })
+    if (game.p1) {
+      io.in(game.p1).emit('move-made',{ board: game.board })
+    }
+    if (game.p2) {
+      io.in(game.p2).emit('move-made',{ board: reverseBoard(game.board) })
+    }
+
+    for (let client of game.spec) {
+      client.send(format({ type: "move-made", data: { board: game.board } })); //send to each spec
+    }
+  })
+
+  socket.on('reset-game',()=>{
+    debug('reset-game')
+    game.board = structuredClone(startingBoard);
+      game.turn = "w";
+      socket.emit('game-reset',{ board: game.board })
+      if (game.p1) {
+        io.in(game.p1).emit('move-made',{ board: game.board })
+      }
+      if (game.p2) {
+        io.in(game.p2).emit('move-made',{ board: reverseBoard(game.board) })
+      }
+  
+      for (let client of game.spec) {
+        client.send(format({ type: "move-made", data: { board: game.board } })); //send to each spec
+      }
+  })
+}
+
+function debug(type,message={}){
+  console.log(
+    `Received event with type ${type} and data ${JSON.stringify(message)}`
+  );
+}
+
+const io = new Server({
+  cors:{
+    origin:['http://localhost:8080']
+  }
+})
+io.listen(3000)
+io.on("connection",socket=>{
+  handleConnect(io,socket)
+  handleMessages(io,socket)
+})
