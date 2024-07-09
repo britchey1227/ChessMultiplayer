@@ -353,7 +353,7 @@ function handleConnect(ws) {
   }
 }
 
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({ port: 3000 });
 wss.on("connection", function connection(ws) {
   handleConnect(ws);
   ws.on("message", function message(data) {

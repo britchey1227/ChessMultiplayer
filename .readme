@@ -1,0 +1,48 @@
+# Chess Clone
+
+A full stack web apllication that allows users to connect to a server, via websockets, to play chess.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [Support](#support)
+- [Contributing](#contributing)
+
+## Installation
+
+### Prerequisites
+
+Make sure to have [node](https://nodejs.org/en) installed locally.
+
+### Server
+
+Navigate to the `server` directory, download the dependencies and start the websocket server on [http://localhost:3000](http://localhost:3000).
+
+```zsh
+cd server
+npm i
+npm run start
+```
+
+### Client
+
+In a separate terminal session, navigate to the `client` directory, download the dependencies and start the development server to expost the UI on [http://localhost:8080](http://localhost:8080).
+
+```zsh
+cd client
+npm i
+npm run start
+```
+
+## Usage
+
+In a web browser, navigate to [http://localhost:8080](http://localhost) to view the front end.
+
+## Support
+
+Please [open an issue](https://github.com/britchey1227/ChessMultiplayer/issues/new) for support.
+
+## Contributing
+
+Please contribute using [Github Flow](https://guides.github.com/introduction/flow/). Create a branch, add commits, and [open a pull request](https://github.com/britchey1227/ChessMultiplayer/compare/).

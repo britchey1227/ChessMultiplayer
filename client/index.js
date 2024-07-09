@@ -31,7 +31,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   //connect the user to the server
-  const ws = new WebSocket("ws://localhost:8080");
+  const ws = new WebSocket("ws://localhost:3000");
   ws.onopen = () => {
     ws.send(format({ type: "init-game", data: {} }));
   };
