@@ -15,9 +15,9 @@ let startingBoard = [
 
 const game = {
     board: null,
-    p1: null,
-    p2: null,
-    spec: [],
+    white: null,
+    black: null,
+    spectators: [],
     turn: 'w',
 }
 
@@ -64,8 +64,8 @@ function toggleTurn() {
 }
 
 function isTurn(socket) {
-    if (game.turn === 'w') return socket.id === game.p1
-    return socket.id === game.p2
+    if (game.turn === 'w') return socket.id === game.white
+    return socket.id === game.black
 }
 
 function isValidMove({ to, from }) {
@@ -260,18 +260,18 @@ function format(data) {
 function handleConnect(io, socket) {
     console.log(`New connection ${socket.id}`)
     let data
-    if (!game.p1) {
+    if (!game.white) {
         //white
-        game.p1 = socket.id
-        data = { player: 'p1' }
-    } else if (!game.p2) {
+        game.white = socket.id
+        data = { playerType: 'white' }
+    } else if (!game.black) {
         //black
-        game.p2 = socket.id
-        data = { player: 'p2' }
+        game.black = socket.id
+        data = { playerType: 'black' }
     } else {
         //spectator
-        game.spec.push(socket.id)
-        data = { player: 'spec' }
+        game.spectators.push(socket.id)
+        data = { playerType: 'spectator' }
     }
 
     io.in(socket.id).emit('welcome', data)
@@ -280,11 +280,11 @@ function handleConnect(io, socket) {
 function handleMessages(io, socket) {
     socket.on('init-game', () => {
         debug('init-game')
-        // BUG: everytime a new user connects it resets the board, so game can be halfway done and spec joins and resets the board
+        // BUG: everytime a new user connects it resets the board, so game can be halfway done and spectator joins and resets the board
         // SOLUTION: send current board rather than making it startingBoard, only reset on initial connect for white and on reset button
         game.board = structuredClone(startingBoard)
 
-        if (socket.id === game.p2) {
+        if (socket.id === game.black) {
             io.in(socket.id).emit(
                 'init-game',
                 structuredClone(reverseBoard(game.board))
@@ -315,19 +315,19 @@ function handleMessages(io, socket) {
         toggleTurn(game)
 
         // socket.emit('move-made',{ board: game.board })
-        if (game.p1) {
-            io.in(game.p1).emit('move-made', { board: game.board })
+        if (game.white) {
+            io.in(game.white).emit('move-made', { board: game.board })
         }
-        if (game.p2) {
-            io.in(game.p2).emit('move-made', {
+        if (game.black) {
+            io.in(game.black).emit('move-made', {
                 board: reverseBoard(game.board),
             })
         }
 
-        for (let client of game.spec) {
+        for (let client of game.spectators) {
             client.send(
                 format({ type: 'move-made', data: { board: game.board } })
-            ) //send to each spec
+            ) //send to each spectator
         }
     })
 
@@ -336,19 +336,19 @@ function handleMessages(io, socket) {
         game.board = structuredClone(startingBoard)
         game.turn = 'w'
         socket.emit('game-reset', { board: game.board })
-        if (game.p1) {
-            io.in(game.p1).emit('move-made', { board: game.board })
+        if (game.white) {
+            io.in(game.white).emit('move-made', { board: game.board })
         }
-        if (game.p2) {
-            io.in(game.p2).emit('move-made', {
+        if (game.black) {
+            io.in(game.black).emit('move-made', {
                 board: reverseBoard(game.board),
             })
         }
 
-        for (let client of game.spec) {
+        for (let client of game.spectators) {
             client.send(
                 format({ type: 'move-made', data: { board: game.board } })
-            ) //send to each spec
+            ) //send to each spectator
         }
     })
 }

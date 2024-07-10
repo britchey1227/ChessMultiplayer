@@ -19,9 +19,9 @@ window.addEventListener('DOMContentLoaded', () => {
     // const playerDisplay = document.querySelector('.display-player');
     const resetButton = document.querySelector('#reset')
     const announcer = document.querySelector('.announcer')
+    const playerTypeIndicator = document.querySelector('#playerType')
 
-    let currentPlayer = null
-    let playerColor = null
+    let playerType = null
     let isGameActive = true
 
     const WHITE = 'w'
@@ -38,6 +38,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const socket = io('http://localhost:3000')
     handleMessages(socket)
+
     function handleMessages(socket) {
         socket.on('connect', () => {
             debug('connect', {})
@@ -46,13 +47,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
         socket.on('welcome', (data) => {
             debug('welcome', data)
-            currentPlayer = data.player
-            if (currentPlayer === 'p2') {
+            playerType = data.playerType
+            playerTypeIndicator.innerText = playerType
+            if (playerType === 'black') {
                 // if we are black, flip the ids on the tiles of the board
                 flipBoard()
-                playerColor = BLACK
-            } else {
-                playerColor = WHITE
             }
         })
 
@@ -170,7 +169,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if (
                 !lastClickedTile ||
                 tileToPiece(lastClickedTile) === '' ||
-                tileToPiece(tile)[0] === playerColor
+                tileToPiece(tile)[0] === playerType
             ) {
                 //if no previous tile, if from is empty, if to is of same color
                 colorBoard()
