@@ -280,9 +280,9 @@ function handleConnect(io, socket) {
 function handleMessages(io, socket) {
     socket.on('init-game', () => {
         debug('init-game')
-        // BUG: everytime a new user connects it resets the board, so game can be halfway done and spectator joins and resets the board
-        // SOLUTION: send current board rather than making it startingBoard, only reset on initial connect for white and on reset button
-        game.board = structuredClone(startingBoard)
+        if (socket.id === game.white) {
+            game.board = structuredClone(startingBoard)
+        }
 
         if (socket.id === game.black) {
             io.in(socket.id).emit(
@@ -324,10 +324,8 @@ function handleMessages(io, socket) {
             })
         }
 
-        for (let client of game.spectators) {
-            client.send(
-                format({ type: 'move-made', data: { board: game.board } })
-            ) //send to each spectator
+        for (let clientId of game.spectators) {
+            io.in(clientId).emit('move-made', { board: game.board }) //send to each spectator
         }
     })
 
@@ -345,10 +343,8 @@ function handleMessages(io, socket) {
             })
         }
 
-        for (let client of game.spectators) {
-            client.send(
-                format({ type: 'move-made', data: { board: game.board } })
-            ) //send to each spectator
+        for (let clientId of game.spectators) {
+            io.in(clientId).emit('move-made', { board: game.board }) //send to each spectator
         }
     })
 }
