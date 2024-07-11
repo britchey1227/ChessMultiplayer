@@ -2,14 +2,14 @@ import { io } from 'socket.io-client'
 
 window.addEventListener('DOMContentLoaded', () => {
     let board = [
+        ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
+        ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
         ['', '', '', '', '', '', '', ''],
         ['', '', '', '', '', '', '', ''],
         ['', '', '', '', '', '', '', ''],
         ['', '', '', '', '', '', '', ''],
-        ['', '', '', '', '', '', '', ''],
-        ['', '', '', '', '', '', '', ''],
-        ['', '', '', '', '', '', '', ''],
-        ['', '', '', '', '', '', '', ''],
+        ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
+        ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR'],
     ]
 
     const tiles = Array.from(document.querySelectorAll('.tile'))
@@ -53,6 +53,26 @@ window.addEventListener('DOMContentLoaded', () => {
                 // if we are black, flip the ids on the tiles of the board
                 flipBoard()
             }
+        })
+
+        socket.on('disconnect', (data) => {
+            playerType = null
+            if (tiles[0].id === 'h1') {
+                flipBoard()
+            }
+            board = [
+                ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
+                ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
+                ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR'],
+            ]
+            colorBoard();
+            syncBoard();
+            playerTypeIndicator.innerText = 'Welcome'
         })
 
         socket.on('init-game', (data) => {
