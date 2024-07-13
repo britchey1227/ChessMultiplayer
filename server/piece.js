@@ -12,6 +12,20 @@ class Piece {
     stringify() {
         return `${this.color}${this.type[0]}`
     }
+
+    isPathClear(fromRow, fromCol, toRow, toCol, board) {
+        const rowStep = Math.sign(toRow - fromRow);
+        const colStep = Math.sign(toCol - fromCol);
+        let row = fromRow + rowStep;
+        let col = fromCol + colStep;
+    
+        while (row !== toRow || col !== toCol) {
+            if (board[row][col] !== null) return false;
+            row += rowStep;
+            col += colStep;
+        }
+        return true;
+    }
 }
 
 export class Bishop extends Piece {
@@ -20,20 +34,10 @@ export class Bishop extends Piece {
     }
 
     validMoves(fromRow, fromCol, toRow, toCol, board) {
-        // check if to falls into the diagonals
-        for (let i = fromRow, j = fromCol; i < 8 && j < 8; i++, j++) {
-            if (i === toRow && j == toCol) return true
+        if (Math.abs(fromRow - toRow) === Math.abs(fromCol - toCol)) {  // if it's a diagonal
+            return this.isPathClear(fromRow, fromCol, toRow, toCol, board);
         }
-        for (let i = fromRow, j = fromCol; i < 8 && j >= 0; i++, j--) {
-            if (i === toRow && j == toCol) return true
-        }
-        for (let i = fromRow, j = fromCol; i >= 0 && j < 8; i--, j++) {
-            if (i === toRow && j == toCol) return true
-        }
-        for (let i = fromRow, j = fromCol; i >= 0 && j >= 0; i--, j--) {
-            if (i === toRow && j == toCol) return true
-        }
-        return false
+        return false;
     }
 }
 
@@ -43,7 +47,7 @@ export class Rook extends Piece {
     }
 
     validMoves(fromRow, fromCol, toRow, toCol, board) {
-        if (fromCol === toCol || fromRow === toRow) return true
+        if (fromCol === toCol || fromRow === toRow) return this.isPathClear(fromRow, fromCol, toRow, toCol, board);
         return false
     }
 }
@@ -54,20 +58,10 @@ export class Queen extends Piece {
     }
 
     validMoves(fromRow, fromCol, toRow, toCol, board) {
-        // check if to falls into the diagonals
-        for (let i = fromRow, j = fromCol; i < 8 && j < 8; i++, j++) {
-            if (i === toRow && j == toCol) return true
+        if (Math.abs(fromRow - toRow) === Math.abs(fromCol - toCol)) {  // if it's a diagonal
+            return this.isPathClear(fromRow, fromCol, toRow, toCol, board);
         }
-        for (let i = fromRow, j = fromCol; i < 8 && j >= 0; i++, j--) {
-            if (i === toRow && j == toCol) return true
-        }
-        for (let i = fromRow, j = fromCol; i >= 0 && j < 8; i--, j++) {
-            if (i === toRow && j == toCol) return true
-        }
-        for (let i = fromRow, j = fromCol; i >= 0 && j >= 0; i--, j--) {
-            if (i === toRow && j == toCol) return true
-        }
-        if (fromCol === toCol || fromRow === toRow) return true
+        if (fromCol === toCol || fromRow === toRow) return this.isPathClear(fromRow, fromCol, toRow, toCol, board);
         return false
     }
 }
@@ -78,15 +72,9 @@ export class Knight extends Piece {
     }
 
     validMoves(fromRow, fromCol, toRow, toCol, board) {
-        if (fromRow + 1 === toRow && fromCol + 2 == toCol) return true
-        if (fromRow + 1 === toRow && fromCol - 2 == toCol) return true
-        if (fromRow + 2 === toRow && fromCol + 1 == toCol) return true
-        if (fromRow + 2 === toRow && fromCol - 1 == toCol) return true
-        if (fromRow - 1 === toRow && fromCol + 2 == toCol) return true
-        if (fromRow - 1 === toRow && fromCol - 2 == toCol) return true
-        if (fromRow - 2 === toRow && fromCol + 1 == toCol) return true
-        if (fromRow - 2 === toRow && fromCol - 1 == toCol) return true
-        return false
+        const rowDiff = Math.abs(fromRow - toRow);
+        const colDiff = Math.abs(fromCol - toCol);
+        return (rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2);
     }
 
     stringify() {
@@ -169,22 +157,8 @@ export class King extends Piece {
 
     validMoves(fromRow, fromCol, toRow, toCol, board) {
         // TODO: add castling
-        if (fromRow + 1 === toRow) {
-            if (
-                fromCol === toCol ||
-                fromCol - 1 === toCol ||
-                fromCol + 1 === toCol
-            )
-                return true
-        } else if (fromRow - 1 === toRow) {
-            if (
-                fromCol === toCol ||
-                fromCol - 1 === toCol ||
-                fromCol + 1 === toCol
-            )
-                return true
-        } else if (fromRow === toRow) {
-            if (fromCol - 1 === toCol || fromCol + 1 === toCol) return true
+        if (Math.abs(fromRow - toRow) <= 1 && Math.abs(fromCol - toCol) <= 1) { // if move is within 1x1
+            return true;
         }
         return false
     }
