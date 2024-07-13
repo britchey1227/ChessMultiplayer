@@ -70,8 +70,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
                 ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR'],
             ]
-            colorBoard();
-            syncBoard();
+            colorBoard()
+            syncBoard()
             playerTypeIndicator.innerText = 'Welcome'
         })
 
@@ -186,7 +186,10 @@ window.addEventListener('DOMContentLoaded', () => {
     let lastClickedTile = null
     const userAction = (tile, index) => {
         if (isValidAction(tile) && isGameActive) {
-            if (
+            if (lastClickedTile === tile) {
+                colorBoard()
+                lastClickedTile = null
+            } else if (
                 !lastClickedTile ||
                 tileToPiece(lastClickedTile) === '' ||
                 tileToPiece(tile)[0] === playerType[0]
@@ -195,9 +198,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 colorBoard()
                 tile.style.backgroundColor = 'rgba(0, 29, 54, .75)'
                 lastClickedTile = tile
-            } else if (lastClickedTile === tile) {
-                colorBoard()
-                lastClickedTile = null
             } else {
                 const from = lastClickedTile.id
                 const to = tile.id

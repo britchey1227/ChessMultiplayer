@@ -3,7 +3,7 @@
 import { Server } from 'socket.io'
 import { Bishop, Rook, Queen, Knight, Pawn, King } from './piece.js'
 
-function startingBoard(){
+function startingBoard() {
     return [
         [
             new Rook('b'),
@@ -118,6 +118,22 @@ function makeMove({ to, from }) {
     })
     console.log('toRow', toRow, 'toCol', toCol)
 
+    // if we castle
+    if (game.board[fromRow][fromCol].type === 'King') {
+        // kingside
+        if (fromCol - toCol === -2) {
+            game.board[fromRow][7].totalMoves++
+            game.board[fromRow][5] = game.board[fromRow][7]
+            game.board[fromRow][7] = null
+        }
+        // queenside
+        if (fromCol - toCol === 2) {
+            game.board[fromRow][0].totalMoves++
+            game.board[fromRow][3] = game.board[fromRow][0]
+            game.board[fromRow][0] = null
+        }
+    }
+
     game.board[fromRow][fromCol].totalMoves++
     game.board[toRow][toCol] = game.board[fromRow][fromCol]
     game.board[fromRow][fromCol] = null
@@ -152,22 +168,9 @@ function isValidMove({ to, from }) {
     // check cols
     if (fromCol < 0 || toCol < 0 || fromCol >= 8 || toCol >= 8) return false
 
-    // More chess logic...
-
-    // brainstorming: if we want to display valid moves to user before they do a move
-    // once clicked on a from piece, ask to view valid moves
-    // valid moves would send back an empty board with only valid moves (x = valid, '' = invalid)
-    // front end colors only x's to display valid (maybe add class valid to tile)
-    // check if to is valid, if yes send move
-    // simple front end, simpler back end than having to send valid moves to display on front end then determine if the move is valid
-
     // TODO:
-    // each piece logic will be updated to a function inside each object
-    // still need collision check
-    // optimize the hard code
     // check logic & checkmate logic
     // en pessent in pawn moves
-    // castling in king moves
 
     return game.board[fromRow][fromCol].validMoves(
         fromRow,

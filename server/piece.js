@@ -14,17 +14,17 @@ class Piece {
     }
 
     isPathClear(fromRow, fromCol, toRow, toCol, board) {
-        const rowStep = Math.sign(toRow - fromRow);
-        const colStep = Math.sign(toCol - fromCol);
-        let row = fromRow + rowStep;
-        let col = fromCol + colStep;
-    
+        const rowStep = Math.sign(toRow - fromRow)
+        const colStep = Math.sign(toCol - fromCol)
+        let row = fromRow + rowStep
+        let col = fromCol + colStep
+
         while (row !== toRow || col !== toCol) {
-            if (board[row][col] !== null) return false;
-            row += rowStep;
-            col += colStep;
+            if (board[row][col] !== null) return false
+            row += rowStep
+            col += colStep
         }
-        return true;
+        return true
     }
 }
 
@@ -34,10 +34,11 @@ export class Bishop extends Piece {
     }
 
     validMoves(fromRow, fromCol, toRow, toCol, board) {
-        if (Math.abs(fromRow - toRow) === Math.abs(fromCol - toCol)) {  // if it's a diagonal
-            return this.isPathClear(fromRow, fromCol, toRow, toCol, board);
+        if (Math.abs(fromRow - toRow) === Math.abs(fromCol - toCol)) {
+            // if it's a diagonal
+            return this.isPathClear(fromRow, fromCol, toRow, toCol, board)
         }
-        return false;
+        return false
     }
 }
 
@@ -47,7 +48,8 @@ export class Rook extends Piece {
     }
 
     validMoves(fromRow, fromCol, toRow, toCol, board) {
-        if (fromCol === toCol || fromRow === toRow) return this.isPathClear(fromRow, fromCol, toRow, toCol, board);
+        if (fromCol === toCol || fromRow === toRow)
+            return this.isPathClear(fromRow, fromCol, toRow, toCol, board)
         return false
     }
 }
@@ -58,10 +60,12 @@ export class Queen extends Piece {
     }
 
     validMoves(fromRow, fromCol, toRow, toCol, board) {
-        if (Math.abs(fromRow - toRow) === Math.abs(fromCol - toCol)) {  // if it's a diagonal
-            return this.isPathClear(fromRow, fromCol, toRow, toCol, board);
+        if (Math.abs(fromRow - toRow) === Math.abs(fromCol - toCol)) {
+            // if it's a diagonal
+            return this.isPathClear(fromRow, fromCol, toRow, toCol, board)
         }
-        if (fromCol === toCol || fromRow === toRow) return this.isPathClear(fromRow, fromCol, toRow, toCol, board);
+        if (fromCol === toCol || fromRow === toRow)
+            return this.isPathClear(fromRow, fromCol, toRow, toCol, board)
         return false
     }
 }
@@ -72,9 +76,11 @@ export class Knight extends Piece {
     }
 
     validMoves(fromRow, fromCol, toRow, toCol, board) {
-        const rowDiff = Math.abs(fromRow - toRow);
-        const colDiff = Math.abs(fromCol - toCol);
-        return (rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2);
+        const rowDiff = Math.abs(fromRow - toRow)
+        const colDiff = Math.abs(fromCol - toCol)
+        return (
+            (rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2)
+        )
     }
 
     stringify() {
@@ -96,9 +102,17 @@ export class Pawn extends Piece {
                 if (fromRow + 1 === toRow) {
                     if (fromCol === toCol && board[toRow][toCol] === null)
                         return true
-                    if (fromCol + 1 === toCol && board[toRow][toCol] != null && board[toRow][toCol].color === 'w')
+                    if (
+                        fromCol + 1 === toCol &&
+                        board[toRow][toCol] != null &&
+                        board[toRow][toCol].color === 'w'
+                    )
                         return true
-                    if (fromCol - 1 === toCol && board[toRow][toCol] != null && board[toRow][toCol].color === 'w')
+                    if (
+                        fromCol - 1 === toCol &&
+                        board[toRow][toCol] != null &&
+                        board[toRow][toCol].color === 'w'
+                    )
                         return true
                     return false
                 } else if (fromRow + 2 === toRow) {
@@ -112,9 +126,17 @@ export class Pawn extends Piece {
             } else if (fromRow + 1 === toRow) {
                 if (fromCol === toCol && board[toRow][toCol] === null)
                     return true
-                if (fromCol + 1 === toCol && board[toRow][toCol] != null && board[toRow][toCol].color === 'w')
+                if (
+                    fromCol + 1 === toCol &&
+                    board[toRow][toCol] != null &&
+                    board[toRow][toCol].color === 'w'
+                )
                     return true
-                if (fromCol - 1 === toCol && board[toRow][toCol] != null && board[toRow][toCol].color === 'w')
+                if (
+                    fromCol - 1 === toCol &&
+                    board[toRow][toCol] != null &&
+                    board[toRow][toCol].color === 'w'
+                )
                     return true
             }
         }
@@ -125,9 +147,17 @@ export class Pawn extends Piece {
                 if (fromRow - 1 === toRow) {
                     if (fromCol === toCol && board[toRow][toCol] === null)
                         return true
-                    if (fromCol + 1 === toCol && board[toRow][toCol] != null &&  board[toRow][toCol].color === 'b')
+                    if (
+                        fromCol + 1 === toCol &&
+                        board[toRow][toCol] != null &&
+                        board[toRow][toCol].color === 'b'
+                    )
                         return true
-                    if (fromCol - 1 === toCol && board[toRow][toCol] != null &&  board[toRow][toCol].color === 'b')
+                    if (
+                        fromCol - 1 === toCol &&
+                        board[toRow][toCol] != null &&
+                        board[toRow][toCol].color === 'b'
+                    )
                         return true
                 } else if (fromRow - 2 === toRow) {
                     if (
@@ -140,9 +170,17 @@ export class Pawn extends Piece {
             } else if (fromRow - 1 === toRow) {
                 if (fromCol === toCol && board[toRow][toCol] === null)
                     return true
-                if (fromCol + 1 === toCol && board[toRow][toCol] != null &&  board[toRow][toCol].color === 'b')
+                if (
+                    fromCol + 1 === toCol &&
+                    board[toRow][toCol] != null &&
+                    board[toRow][toCol].color === 'b'
+                )
                     return true
-                if (fromCol - 1 === toCol && board[toRow][toCol] != null &&  board[toRow][toCol].color === 'b')
+                if (
+                    fromCol - 1 === toCol &&
+                    board[toRow][toCol] != null &&
+                    board[toRow][toCol].color === 'b'
+                )
                     return true
             }
         }
@@ -156,9 +194,29 @@ export class King extends Piece {
     }
 
     validMoves(fromRow, fromCol, toRow, toCol, board) {
-        // TODO: add castling
-        if (Math.abs(fromRow - toRow) <= 1 && Math.abs(fromCol - toCol) <= 1) { // if move is within 1x1
-            return true;
+        if (Math.abs(fromRow - toRow) <= 1 && Math.abs(fromCol - toCol) <= 1) {
+            // if move is within 1x1
+            return true
+        }
+        // castling
+        if (this.totalMoves === 0 && fromRow === toRow) {
+            // castle king side
+            if (
+                fromCol - toCol === -2 &&
+                board[fromRow][7].type === 'Rook' &&
+                board[fromRow][7].totalMoves === 0
+            ) {
+                return this.isPathClear(fromRow, fromCol, toRow, 7, board)
+            }
+
+            //castle queen side
+            if (
+                fromCol - toCol === 2 &&
+                board[fromRow][0].type === 'Rook' &&
+                board[fromRow][0].totalMoves === 0
+            ) {
+                return this.isPathClear(fromRow, fromCol, toRow, 0, board)
+            }
         }
         return false
     }
