@@ -189,7 +189,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if (
                 !lastClickedTile ||
                 tileToPiece(lastClickedTile) === '' ||
-                tileToPiece(tile)[0] === playerType
+                tileToPiece(tile)[0] === playerType[0]
             ) {
                 //if no previous tile, if from is empty, if to is of same color
                 colorBoard()

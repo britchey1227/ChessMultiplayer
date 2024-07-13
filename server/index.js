@@ -1,17 +1,56 @@
 // TODO: user emit instead of sending to each connection (might need socket.io)
 
 import { Server } from 'socket.io'
+import { Bishop, Rook, Queen, Knight, Pawn, King } from './piece.js'
 
-let startingBoard = [
-    ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
-    ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
-    ['', '', '', '', '', '', '', ''],
-    ['', '', '', '', '', '', '', ''],
-    ['', '', '', '', '', '', '', ''],
-    ['', '', '', '', '', '', '', ''],
-    ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
-    ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR'],
-]
+function startingBoard(){
+    return [
+        [
+            new Rook('b'),
+            new Knight('b'),
+            new Bishop('b'),
+            new Queen('b'),
+            new King('b'),
+            new Bishop('b'),
+            new Knight('b'),
+            new Rook('b'),
+        ],
+        [
+            new Pawn('b'),
+            new Pawn('b'),
+            new Pawn('b'),
+            new Pawn('b'),
+            new Pawn('b'),
+            new Pawn('b'),
+            new Pawn('b'),
+            new Pawn('b'),
+        ],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [
+            new Pawn('w'),
+            new Pawn('w'),
+            new Pawn('w'),
+            new Pawn('w'),
+            new Pawn('w'),
+            new Pawn('w'),
+            new Pawn('w'),
+            new Pawn('w'),
+        ],
+        [
+            new Rook('w'),
+            new Knight('w'),
+            new Bishop('w'),
+            new Queen('w'),
+            new King('w'),
+            new Bishop('w'),
+            new Knight('w'),
+            new Rook('w'),
+        ],
+    ]
+}
 
 const game = {
     board: null,
@@ -39,6 +78,30 @@ function reverseBoard(board) {
     return result
 }
 
+function stringifyBoard(board) {
+    let result = [
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', ''],
+    ]
+
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            if (board[i][j] === null) {
+                result[i][j] = ''
+            } else {
+                result[i][j] = board[i][j].stringify()
+            }
+        }
+    }
+    return result
+}
+
 function makeMove({ to, from }) {
     console.log(`Making move from ${from} to ${to}...`)
     const [fromFile, fromRank] = [from[0], parseInt(from[1])]
@@ -55,8 +118,9 @@ function makeMove({ to, from }) {
     })
     console.log('toRow', toRow, 'toCol', toCol)
 
+    game.board[fromRow][fromCol].totalMoves++
     game.board[toRow][toCol] = game.board[fromRow][fromCol]
-    game.board[fromRow][fromCol] = ''
+    game.board[fromRow][fromCol] = null
 }
 
 function toggleTurn() {
@@ -105,152 +169,13 @@ function isValidMove({ to, from }) {
     // en pessent in pawn moves
     // castling in king moves
 
-    // bishop
-    if (game.board[fromRow][fromCol][1] === 'B') {
-        // check if to falls into the diagonals
-        for (let i = fromRow, j = fromCol; i < 8 && j < 8; i++, j++) {
-            if (i === toRow && j == toCol) return true
-        }
-        for (let i = fromRow, j = fromCol; i < 8 && j >= 0; i++, j--) {
-            if (i === toRow && j == toCol) return true
-        }
-        for (let i = fromRow, j = fromCol; i >= 0 && j < 8; i--, j++) {
-            if (i === toRow && j == toCol) return true
-        }
-        for (let i = fromRow, j = fromCol; i >= 0 && j >= 0; i--, j--) {
-            if (i === toRow && j == toCol) return true
-        }
-        return false
-    }
-
-    // rook
-    if (game.board[fromRow][fromCol][1] === 'R') {
-        if (fromCol === toCol || fromRow === toRow) return true
-        return false
-    }
-
-    // queen
-    if (game.board[fromRow][fromCol][1] === 'Q') {
-        // check if to falls into the diagonals
-        for (let i = fromRow, j = fromCol; i < 8 && j < 8; i++, j++) {
-            if (i === toRow && j == toCol) return true
-        }
-        for (let i = fromRow, j = fromCol; i < 8 && j >= 0; i++, j--) {
-            if (i === toRow && j == toCol) return true
-        }
-        for (let i = fromRow, j = fromCol; i >= 0 && j < 8; i--, j++) {
-            if (i === toRow && j == toCol) return true
-        }
-        for (let i = fromRow, j = fromCol; i >= 0 && j >= 0; i--, j--) {
-            if (i === toRow && j == toCol) return true
-        }
-        if (fromCol === toCol || fromRow === toRow) return true
-        return false
-    }
-
-    //knight
-    if (game.board[fromRow][fromCol][1] === 'N') {
-        if (fromRow + 1 === toRow && fromCol + 2 == toCol) return true
-        if (fromRow + 1 === toRow && fromCol - 2 == toCol) return true
-        if (fromRow + 2 === toRow && fromCol + 1 == toCol) return true
-        if (fromRow + 2 === toRow && fromCol - 1 == toCol) return true
-        if (fromRow - 1 === toRow && fromCol + 2 == toCol) return true
-        if (fromRow - 1 === toRow && fromCol - 2 == toCol) return true
-        if (fromRow - 2 === toRow && fromCol + 1 == toCol) return true
-        if (fromRow - 2 === toRow && fromCol - 1 == toCol) return true
-        return false
-    }
-
-    //pawn
-    if (game.board[fromRow][fromCol][1] === 'P') {
-        //TODO: Add en pessent
-        //black
-        if (game.board[fromRow][fromCol][0] === 'b') {
-            if (fromRow === 1) {
-                //if pawn hasnt moved
-                if (fromRow + 1 === toRow) {
-                    if (game.board[toRow][toCol] === '') return true
-                    return false
-                } else if (fromRow + 2 === toRow) {
-                    if (
-                        game.board[fromRow + 1][toCol] === '' &&
-                        game.board[fromRow + 2][toCol] === ''
-                    )
-                        return true
-                    return false
-                }
-            } else if (fromRow + 1 === toRow) {
-                if (fromCol === toCol && game.board[toRow][toCol] === '')
-                    return true
-                if (
-                    fromCol + 1 === toCol &&
-                    game.board[toRow][toCol][0] === 'w'
-                )
-                    return true
-                if (
-                    fromCol - 1 === toCol &&
-                    game.board[toRow][toCol][0] === 'w'
-                )
-                    return true
-            }
-        }
-        //white
-        if (game.board[fromRow][fromCol][0] === 'w') {
-            if (fromRow === 6) {
-                //if pawn hasnt moved
-                if (fromRow - 1 === toRow) {
-                    if (game.board[toRow][toCol] === '') return true
-                    return false
-                } else if (fromRow - 2 === toRow) {
-                    if (
-                        game.board[fromRow - 1][toCol] === '' &&
-                        game.board[fromRow - 2][toCol] === ''
-                    )
-                        return true
-                    return false
-                }
-            } else if (fromRow - 1 === toRow) {
-                if (fromCol === toCol && game.board[toRow][toCol] === '')
-                    return true
-                if (
-                    fromCol + 1 === toCol &&
-                    game.board[toRow][toCol][0] === 'b'
-                )
-                    return true
-                if (
-                    fromCol - 1 === toCol &&
-                    game.board[toRow][toCol][0] === 'b'
-                )
-                    return true
-            }
-        }
-        return false
-    }
-
-    // king
-    if (game.board[fromRow][fromCol][1] === 'K') {
-        // TODO: add castling
-        if (fromRow + 1 === toRow) {
-            if (
-                fromCol === toCol ||
-                fromCol - 1 === toCol ||
-                fromCol + 1 === toCol
-            )
-                return true
-        } else if (fromRow - 1 === toRow) {
-            if (
-                fromCol === toCol ||
-                fromCol - 1 === toCol ||
-                fromCol + 1 === toCol
-            )
-                return true
-        } else if (fromRow === toRow) {
-            if (fromCol - 1 === toCol || fromCol + 1 === toCol) return true
-        }
-        return false
-    }
-
-    return true
+    return game.board[fromRow][fromCol].validMoves(
+        fromRow,
+        fromCol,
+        toRow,
+        toCol,
+        game.board
+    )
 }
 
 function format(data) {
@@ -281,21 +206,25 @@ function handleMessages(io, socket) {
     socket.on('init-game', () => {
         debug('init-game')
         if (socket.id === game.white) {
-            game.board = structuredClone(startingBoard)
+            game.board = startingBoard()
         }
 
         if (socket.id === game.black) {
             io.in(socket.id).emit(
                 'init-game',
-                structuredClone(reverseBoard(game.board))
+                structuredClone(reverseBoard(stringifyBoard(game.board)))
             )
         } else {
-            io.in(socket.id).emit('init-game', structuredClone(game.board))
+            io.in(socket.id).emit(
+                'init-game',
+                structuredClone(stringifyBoard(game.board))
+            )
         }
     })
 
     socket.on('make-move', (data) => {
         debug('make-move', data)
+
         if (!isTurn(socket)) {
             io.in(socket.id).emit('invalid-movde', {
                 message: 'Not your move bruv',
@@ -316,35 +245,44 @@ function handleMessages(io, socket) {
 
         // socket.emit('move-made',{ board: game.board })
         if (game.white) {
-            io.in(game.white).emit('move-made', { board: game.board })
+            io.in(game.white).emit('move-made', {
+                board: stringifyBoard(game.board),
+            })
         }
         if (game.black) {
             io.in(game.black).emit('move-made', {
-                board: reverseBoard(game.board),
+                board: reverseBoard(stringifyBoard(game.board)),
             })
         }
 
         for (let clientId of game.spectators) {
-            io.in(clientId).emit('move-made', { board: game.board }) //send to each spectator
+            io.in(clientId).emit('move-made', {
+                board: stringifyBoard(game.board),
+            }) //send to each spectator
         }
     })
 
     socket.on('reset-game', () => {
+        //  need to check if w or b resets so specs cant
         debug('reset-game')
-        game.board = structuredClone(startingBoard)
+        game.board = startingBoard()
         game.turn = 'w'
-        socket.emit('game-reset', { board: game.board })
+        socket.emit('game-reset', { board: stringifyBoard(game.board) })
         if (game.white) {
-            io.in(game.white).emit('move-made', { board: game.board })
+            io.in(game.white).emit('move-made', {
+                board: stringifyBoard(game.board),
+            })
         }
         if (game.black) {
             io.in(game.black).emit('move-made', {
-                board: reverseBoard(game.board),
+                board: reverseBoard(stringifyBoard(game.board)),
             })
         }
 
         for (let clientId of game.spectators) {
-            io.in(clientId).emit('move-made', { board: game.board }) //send to each spectator
+            io.in(clientId).emit('move-made', {
+                board: stringifyBoard(game.board),
+            }) //send to each spectator
         }
     })
 }
