@@ -91,10 +91,31 @@ export class Knight extends Piece {
 export class Pawn extends Piece {
     constructor(color) {
         super(color, 'Pawn')
+        this.enPessent = false
     }
 
-    validMoves(fromRow, fromCol, toRow, toCol, board) {
-        //TODO: Add en pessent
+    validMoves(fromRow, fromCol, toRow, toCol, board, lastMove) {
+        // en pessent
+        if (lastMove.length === 2 || (lastMove.length === 3 && lastMove[2] === '+')) {
+            const lastRow = 8 - parseInt(lastMove[1])
+            const lastCol = lastMove.charCodeAt(0) - 'a'.charCodeAt(0)
+            if (
+                (fromRow == 3 || fromRow == 4) &&
+                lastRow === fromRow &&
+                (lastCol === fromCol + 1 || lastCol === fromCol - 1) &&
+                board[lastRow][lastCol].totalMoves === 1 &&
+                toCol === lastCol
+            ) {
+                if (this.color === 'w' && toRow === lastRow - 1) {
+                    this.enPessent = true
+                    return true
+                } else if (this.color === 'b' && toRow === lastRow + 1) {
+                    this.enPessent = true
+                    return true
+                }
+            }
+        }
+
         //black
         if (this.color === 'b') {
             if (fromRow === 1) {

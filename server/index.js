@@ -58,6 +58,7 @@ const game = {
     black: null,
     spectators: [],
     turn: 'w',
+    moves: [],
 }
 
 function getFileRank(mv) {
@@ -102,6 +103,11 @@ function stringifyBoard(board) {
     return result
 }
 
+// decide where to put this (in game or leave here or somewhere else)
+// https://www.chess.com/terms/chess-notation
+// lastMove = piece(if not pawn)to
+let lastMove = ''
+
 function makeMove({ to, from }) {
     console.log(`Making move from ${from} to ${to}...`)
     const [fromFile, fromRank] = [from[0], parseInt(from[1])]
@@ -118,6 +124,34 @@ function makeMove({ to, from }) {
     })
     console.log('toRow', toRow, 'toCol', toCol)
 
+    lastMove = ''
+    // append the pice
+    if(game.board[fromRow][fromCol].type != 'Pawn'){
+        lastMove += game.board[fromRow][fromCol].stringify()[1]
+    }
+    // if we capture a piece, add the x notation
+    if(game.board[toRow][toCol] != null){
+        // for pawn captures, we need to add the file
+        if(game.board[fromRow][fromCol].type === 'Pawn'){
+            lastMove += fromFile
+        }
+        lastMove += 'x'
+    }
+    // if our move was just en pessent, add notation and removed captured piece
+    if(game.board[fromRow][fromCol].enPessent){
+        game.board[fromRow][fromCol].enPessent = false
+        lastMove += fromFile + 'x'
+
+        if(game.board[fromRow][fromCol].color === 'w'){
+            game.board[toRow + 1][toCol] = null
+        } else {
+            game.board[toRow - 1][toCol] = null
+        }
+    }
+ 
+    // add to for move notation
+    lastMove += to
+
     // if we castle
     if (game.board[fromRow][fromCol].type === 'King') {
         // kingside
@@ -125,18 +159,23 @@ function makeMove({ to, from }) {
             game.board[fromRow][7].totalMoves++
             game.board[fromRow][5] = game.board[fromRow][7]
             game.board[fromRow][7] = null
+            lastMove = '0-0'
         }
         // queenside
         if (fromCol - toCol === 2) {
             game.board[fromRow][0].totalMoves++
             game.board[fromRow][3] = game.board[fromRow][0]
             game.board[fromRow][0] = null
+            lastMove = '0-0-0'
         }
     }
 
     game.board[fromRow][fromCol].totalMoves++
     game.board[toRow][toCol] = game.board[fromRow][fromCol]
     game.board[fromRow][fromCol] = null
+
+    game.moves.push(lastMove)
+    console.log(game.moves)
 }
 
 function toggleTurn() {
@@ -170,14 +209,14 @@ function isValidMove({ to, from }) {
 
     // TODO:
     // check logic & checkmate logic
-    // en pessent in pawn moves
 
     return game.board[fromRow][fromCol].validMoves(
         fromRow,
         fromCol,
         toRow,
         toCol,
-        game.board
+        game.board,
+        lastMove
     )
 }
 
@@ -215,12 +254,12 @@ function handleMessages(io, socket) {
         if (socket.id === game.black) {
             io.in(socket.id).emit(
                 'init-game',
-                structuredClone(reverseBoard(stringifyBoard(game.board)))
+                reverseBoard(stringifyBoard(game.board))
             )
         } else {
             io.in(socket.id).emit(
                 'init-game',
-                structuredClone(stringifyBoard(game.board))
+                stringifyBoard(game.board)
             )
         }
     })
