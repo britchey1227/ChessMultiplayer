@@ -103,9 +103,127 @@ function stringifyBoard(board) {
     return result
 }
 
+let check = false
+
+function findKing(board, color) {
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            let piece = board[row][col]
+            if (piece && piece.color === color && piece.type === 'King') {
+                return { row, col }
+            }
+        }
+    }
+    return null
+}
+
+function isKingInCheck(board, color, lastMove) {
+    let kingPos = findKing(board, color)
+    if (!kingPos) return false
+
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            let piece = board[row][col]
+            if (piece && piece.color !== color) {
+                let moves = piece.getValidMoves(row, col, board, lastMove)
+                for (let move of moves) {
+                    if (move.row === kingPos.row && move.col === kingPos.col) {
+                        return true
+                    }
+                }
+            }
+        }
+    }
+    return false
+}
+
+function generateAllMoves(board, color, lastMove) {
+    let allMoves = []
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            let piece = board[row][col]
+            if (piece && piece.color === color) {
+                let moves = piece.getValidMoves(row, col, board, lastMove)
+                for (let move of moves) {
+                    allMoves.push({
+                        fromRow: row,
+                        fromCol: col,
+                        toRow: move.row,
+                        toCol: move.col,
+                        piece: move.piece,
+                    })
+                }
+            }
+        }
+    }
+    return allMoves
+}
+
+function simulateMove(board, move) {
+    const { fromRow, fromCol, toRow, toCol, piece } = move
+    let newBoard = board.map((row) => row.slice())
+
+    // if we simulate en pessent
+    if (!newBoard[toRow][toCol] && piece.type === 'Pawn') {
+        if (
+            piece.color === 'w' &&
+            newBoard[toRow + 1][toCol] &&
+            newBoard[toRow + 1][toCol].color != piece.color &&
+            newBoard[toRow + 1][toCol].type === 'Pawn'
+        ) {
+            newBoard[toRow + 1][toCol] = null
+        } else if (
+            piece.color === 'b' &&
+            newBoard[toRow - 1][toCol] &&
+            newBoard[toRow - 1][toCol].color != piece.color &&
+            newBoard[toRow - 1][toCol].type === 'Pawn'
+        ) {
+            newBoard[toRow - 1][toCol] = null
+        }
+    }
+
+    // if we simulate castle
+    if (
+        newBoard[fromRow][fromCol].type === 'King' &&
+        !newBoard[fromRow][fromCol].check
+    ) {
+        // kingside
+        if (fromCol - toCol === -2) {
+            newBoard[fromRow][7].totalMoves++
+            newBoard[fromRow][5] = newBoard[fromRow][7]
+            newBoard[fromRow][7] = null
+        }
+        // queenside
+        if (fromCol - toCol === 2) {
+            newBoard[fromRow][0].totalMoves++
+            newBoard[fromRow][3] = newBoard[fromRow][0]
+            newBoard[fromRow][0] = null
+        }
+    }
+
+    newBoard[fromRow][fromCol].totalMoves++
+    newBoard[toRow][toCol] = newBoard[fromRow][fromCol]
+    newBoard[fromRow][fromCol] = null
+
+    return newBoard
+}
+
+function isCheckmate(board, color, lastMove) {
+    if (!isKingInCheck(board, color, lastMove)) return false
+
+    let allMoves = generateAllMoves(board, color, lastMove)
+    for (let move of allMoves) {
+        let newBoard = simulateMove(board, move)
+        if (!isKingInCheck(newBoard, color, lastMove)) {
+            // console.log(move)    shows what move stops checkmate
+            return false
+        }
+    }
+    return true
+}
+
 // decide where to put this (in game or leave here or somewhere else)
 // https://www.chess.com/terms/chess-notation
-// lastMove = piece(if not pawn)to
 let lastMove = ''
 
 function makeMove({ to, from }) {
@@ -124,34 +242,52 @@ function makeMove({ to, from }) {
     })
     console.log('toRow', toRow, 'toCol', toCol)
 
+    let opponentColor = 'w'
+    let pieceColor = 'b'
+    if (game.board[fromRow][fromCol].color === 'w')
+        (opponentColor = 'b'), (pieceColor = 'w')
+
     lastMove = ''
     // append the pice
-    if(game.board[fromRow][fromCol].type != 'Pawn'){
+    if (game.board[fromRow][fromCol].type != 'Pawn') {
         lastMove += game.board[fromRow][fromCol].stringify()[1]
     }
+
     // if we capture a piece, add the x notation
-    if(game.board[toRow][toCol] != null){
+    if (game.board[toRow][toCol] != null) {
         // for pawn captures, we need to add the file
-        if(game.board[fromRow][fromCol].type === 'Pawn'){
+        if (game.board[fromRow][fromCol].type === 'Pawn') {
             lastMove += fromFile
         }
         lastMove += 'x'
     }
-    // if our move was just en pessent, add notation and removed captured piece
-    if(game.board[fromRow][fromCol].enPessent){
-        game.board[fromRow][fromCol].enPessent = false
-        lastMove += fromFile + 'x'
 
-        if(game.board[fromRow][fromCol].color === 'w'){
+    // if en pessent, add notation and removed captured piece
+    if (
+        !game.board[toRow][toCol] &&
+        game.board[fromRow][fromCol].type === 'Pawn'
+    ) {
+        if (
+            pieceColor === 'w' &&
+            game.board[toRow + 1][toCol] &&
+            game.board[toRow + 1][toCol].color === opponentColor &&
+            game.board[toRow + 1][toCol].type === 'Pawn'
+        ) {
             game.board[toRow + 1][toCol] = null
-        } else {
+            lastMove += fromFile + 'x'
+        } else if (
+            pieceColor === 'b' &&
+            game.board[toRow - 1][toCol] &&
+            game.board[toRow - 1][toCol].color === opponentColor &&
+            game.board[toRow - 1][toCol].type === 'Pawn'
+        ) {
             game.board[toRow - 1][toCol] = null
+            lastMove += fromFile + 'x'
         }
     }
- 
+
     // add to for move notation
     lastMove += to
-
     // if we castle
     if (game.board[fromRow][fromCol].type === 'King') {
         // kingside
@@ -175,7 +311,20 @@ function makeMove({ to, from }) {
     game.board[fromRow][fromCol] = null
 
     game.moves.push(lastMove)
-    console.log(game.moves)
+
+    if (isKingInCheck(game.board, opponentColor, lastMove)) {
+        if (isCheckmate(game.board, opponentColor, lastMove)) {
+            // send checkmate and end game
+            console.log(`${opponentColor} is in checkmate!`)
+        } else {
+            let {row, col} = findKing(game.board, opponentColor)
+            game.board[row][col].check = true
+            console.log(`${opponentColor} is in check!`)
+        }
+    } else {
+        let {row, col} = findKing(game.board, opponentColor)
+        game.board[row][col].check = false
+    }
 }
 
 function toggleTurn() {
@@ -210,14 +359,50 @@ function isValidMove({ to, from }) {
     // TODO:
     // check logic & checkmate logic
 
-    return game.board[fromRow][fromCol].validMoves(
-        fromRow,
-        fromCol,
-        toRow,
-        toCol,
-        game.board,
-        lastMove
-    )
+    let piece = game.board[fromRow][fromCol]
+
+    // if the move is valid
+    if (
+        game.board[fromRow][fromCol].validMoves(
+            fromRow,
+            fromCol,
+            toRow,
+            toCol,
+            game.board,
+            lastMove
+        )
+    ) {
+        // if after the move we are still in check, invalid
+        let newBoard = simulateMove(game.board, {
+            fromRow,
+            fromCol,
+            toRow,
+            toCol,
+            piece,
+        })
+        if (
+            isKingInCheck(
+                newBoard,
+                game.board[fromRow][fromCol].color,
+                lastMove
+            )
+        ) {
+            // console.log(move)    shows what move stops checkmate
+            return false
+        }
+        return true
+    } else {
+        return false
+    }
+
+    // return game.board[fromRow][fromCol].validMoves(
+    //     fromRow,
+    //     fromCol,
+    //     toRow,
+    //     toCol,
+    //     game.board,
+    //     lastMove
+    // )
 }
 
 function format(data) {
@@ -257,10 +442,7 @@ function handleMessages(io, socket) {
                 reverseBoard(stringifyBoard(game.board))
             )
         } else {
-            io.in(socket.id).emit(
-                'init-game',
-                stringifyBoard(game.board)
-            )
+            io.in(socket.id).emit('init-game', stringifyBoard(game.board))
         }
     })
 
@@ -309,6 +491,8 @@ function handleMessages(io, socket) {
         debug('reset-game')
         game.board = startingBoard()
         game.turn = 'w'
+        game.moves = []
+        check = false
         socket.emit('game-reset', { board: stringifyBoard(game.board) })
         if (game.white) {
             io.in(game.white).emit('move-made', {
