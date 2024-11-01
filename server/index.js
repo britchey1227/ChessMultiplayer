@@ -1,7 +1,7 @@
 // TODO: user emit instead of sending to each connection (might need socket.io)
 
 import { Server } from 'socket.io'
-import { Bishop, Rook, Queen, Knight, Pawn, King } from './piece.js'
+import { Bishop, Rook, Queen, Knight, Pawn, King } from './pieces/index.js'
 
 function startingBoard() {
     return [
@@ -317,12 +317,12 @@ function makeMove({ to, from }) {
             // send checkmate and end game
             console.log(`${opponentColor} is in checkmate!`)
         } else {
-            let {row, col} = findKing(game.board, opponentColor)
+            let { row, col } = findKing(game.board, opponentColor)
             game.board[row][col].check = true
             console.log(`${opponentColor} is in check!`)
         }
     } else {
-        let {row, col} = findKing(game.board, opponentColor)
+        let { row, col } = findKing(game.board, opponentColor)
         game.board[row][col].check = false
     }
 }
@@ -529,3 +529,5 @@ io.on('connection', (socket) => {
     handleConnect(io, socket)
     handleMessages(io, socket)
 })
+
+console.log('Listening...')
