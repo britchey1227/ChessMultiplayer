@@ -61,9 +61,9 @@ const game = {
     moves: [],
 }
 
-function getFileRank(mv) {
-    return [mv[0], parseInt(mv[1])]
-}
+// function getFileRank(mv) {
+//     return [mv[0], parseInt(mv[1])]
+// }
 
 function getIndexesGivenFileRank({ file, rank }) {
     const col = file.charCodeAt(0) - 'a'.charCodeAt(0)
@@ -102,8 +102,6 @@ function stringifyBoard(board) {
     }
     return result
 }
-
-let check = false
 
 function findKing(board, color) {
     for (let row = 0; row < 8; row++) {
@@ -405,9 +403,9 @@ function isValidMove({ to, from }) {
     // )
 }
 
-function format(data) {
-    return JSON.stringify(data)
-}
+// function format(data) {
+//     return JSON.stringify(data)
+// }
 
 function handleConnect(io, socket) {
     console.log(`New connection ${socket.id}`)
@@ -492,7 +490,6 @@ function handleMessages(io, socket) {
         game.board = startingBoard()
         game.turn = 'w'
         game.moves = []
-        check = false
         socket.emit('game-reset', { board: stringifyBoard(game.board) })
         if (game.white) {
             io.in(game.white).emit('move-made', {
