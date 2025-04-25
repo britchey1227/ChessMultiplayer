@@ -10,12 +10,12 @@ export default class Pawn extends BasePiece {
         // en pessent
         if (
             (lastMove && lastMove.length === 2) ||
-            (lastMove.length === 3 && lastMove[2] === '+')
+            (lastMove && lastMove.length === 3 && lastMove[2] === '+')
         ) {
             const lastRow = 8 - parseInt(lastMove[1])
             const lastCol = lastMove.charCodeAt(0) - 'a'.charCodeAt(0)
             if (
-                (fromRow == 3 || fromRow == 4) &&
+                (fromRow === 3 || fromRow === 4) &&
                 lastRow === fromRow &&
                 (lastCol === fromCol + 1 || lastCol === fromCol - 1) &&
                 board[lastRow][lastCol].totalMoves === 1 &&

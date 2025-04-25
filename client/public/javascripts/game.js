@@ -52,6 +52,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if (playerType === 'black') {
                 // if we are black, flip the ids on the tiles of the board
                 flipBoard()
+                //Potential Bug: black game 1, white game 2, board may still be flipped
             }
         })
 
@@ -186,7 +187,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let lastClickedTile = null
     const userAction = (tile, index) => {
         if (isValidAction(tile) && isGameActive) {
-            if (lastClickedTile === tile) {
+            if (lastClickedTile === tile || (!lastClickedTile && tileToPiece(tile)[0] !== playerType[0])) {
                 colorBoard()
                 lastClickedTile = null
             } else if (
@@ -223,6 +224,8 @@ window.addEventListener('DOMContentLoaded', () => {
     let dragFrom = null;
     let dragTo = null;
 
+    // TODO: can drag opponent color and make a move
+
     function dragStart() {
         dragFrom = this.id
         console.log('dragging has started on ' + dragFrom)
@@ -235,9 +238,11 @@ window.addEventListener('DOMContentLoaded', () => {
     function dragDrop(e) {
         dragTo = this.id
         console.log('You have dropped into ' + dragTo)
-        const from = dragFrom;
-        const to = dragTo;
-        socket.emit('make-move', { to, from })
+        if (dragFrom && dragTo) {
+            const from = dragFrom;
+            const to = dragTo;
+            socket.emit('make-move', { to, from })
+        }
     }
 
     function dragEnd(e) {

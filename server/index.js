@@ -199,7 +199,9 @@ function simulateMove(board, move) {
         }
     }
 
-    newBoard[fromRow][fromCol].totalMoves++
+
+    // BUG: next line updates move count of current board, work on copy?
+    // newBoard[fromRow][fromCol].totalMoves++
     newBoard[toRow][toCol] = newBoard[fromRow][fromCol]
     newBoard[fromRow][fromCol] = null
 
@@ -358,7 +360,6 @@ function isValidMove({ to, from }) {
     // check logic & checkmate logic
 
     let piece = game.board[fromRow][fromCol]
-
     // if the move is valid
     if (
         game.board[fromRow][fromCol].validMoves(
@@ -444,8 +445,28 @@ function handleMessages(io, socket) {
         }
     })
 
+    // socket.on('promotion', ({pieceWeWantToPromoteTo})=>{
+    // if(!game.promotionInProgress) return;
+    // if player sending promotion message !== game.current player (or whatever) return
+    // const from = game.pieceToPromote
+    // const to = game.locationToPromoteTo
+    // const payload = {from,to}
+    // makeMove(payload)
+    // promotePiece(to,pieceWeWantToPromoteTo) // simply updates the piece at the destination spot to new piece type
+    // game.promotionInProgress = false
+    // toggleTurn
+    //})
+
+
+
+
+
+
+
     socket.on('make-move', (data) => {
         debug('make-move', data)
+
+        // if (gaem.promotionInProgress===true) return
 
         if (!isTurn(socket)) {
             io.in(socket.id).emit('invalid-movde', {
@@ -461,6 +482,15 @@ function handleMessages(io, socket) {
 
             return
         }
+
+        // if promotion
+        // set game.promotionInProgress = true
+        // game.pieceToPromote = [fromRow,fromCol] 
+        // game.locationToPromoteTo = [toRow,toCol]
+        // prompt user (send message to user to promote)
+        // break
+
+
 
         makeMove(data)
         toggleTurn(game)
@@ -507,6 +537,10 @@ function handleMessages(io, socket) {
                 board: stringifyBoard(game.board),
             }) //send to each spectator
         }
+    })
+
+    socket.on('get-moves', () => {
+        socket.debug('get-moves')
     })
 }
 
